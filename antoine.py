@@ -135,8 +135,6 @@ def findRBS(genesequence,save):
     l=len(genesequence)
     local=18 # RBS (6) + spacer (<=7) + ATG (3) arrondi au codon près
     for pos in range(0,l-local): # For each position in the gene
-        if pos<700:
-            continue
         print pos
         candidate=genesequence[pos:pos+18] # We look at the 18 next nucleotides
         assert (len(candidate)==18)
