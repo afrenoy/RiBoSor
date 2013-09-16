@@ -97,8 +97,6 @@ rbs='AGGAGG'
 lrbs=len(rbs)
 atg='ATG'
 
-numberofAAchangedautorized=0 # For now
-
 def evaluateRBS(sequence,maxdist):
     global minspace
     global maxspace
