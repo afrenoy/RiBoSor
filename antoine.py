@@ -125,10 +125,12 @@ def evaluateRBS(sequence,maxdist):
             newsequence[lspace]=list(sequence[:lrbs+lspace+3])
     return [(lspace,"".join(newsequence[lspace]),disttable[lspace],relativefirstpostochange[lspace]) for lspace in disttable.keys() if disttable[lspace]<=maxdist]
 
-def treatRBS(genesequence,pos,rbssequence,lspace,distAA,save):
-    global rbs
+
+def treatRBS(origgenesequence,pos,rbssequence,lspace,distN,relpostochange,save):
     global lrbs
     posfirstcds=pos+lrbs+lspace+3
+    assert len(rbssequence)==lrbs+lspace+3 # posfirstcds-pos
+    genesequence=origgenesequence[:pos]+rbssequence+origgenesequence[posfirstcds:] # We do not use rbssequence entirely because we do not need the end
     shift=posfirstcds%3
     if shift==0:
         # Then this RBS is not usefull because in frame
@@ -138,11 +140,11 @@ def treatRBS(genesequence,pos,rbssequence,lspace,distAA,save):
     assert len(genesequence[fr:])%3 == 0
     (modified_end_genesequence,remaining_stops)=tunestopfs.removestopinframepx(genesequence[fr:],shift)
     modified_genesequence=genesequence[:fr]+modified_end_genesequence
-    assert( str(modified_genesequence.translate()) == str(genesequence.translate()) )
+    distAA=[str(modified_genesequence.translate())[i] == x for (i,x) in enumerate(str(origgenesequence.translate()))].count(False)
     sizeoverlap=(len(genesequence)-(pos+lrbs+lspace))
     protection=float(sizeoverlap)/len(genesequence)
-    distBP=[modified_genesequence[i] == x for (i,x) in enumerate(genesequence)].count(False)
-    save.writerow([pos,sizeoverlap,protection,shift,distBP,distAA,remaining_stops,str(modified_genesequence),'Antoine'])
+    distBP=[modified_genesequence[i] == x for (i,x) in enumerate(origgenesequence)].count(False)
+    save.writerow([pos,sizeoverlap,protection,shift,distBP,distAA,remaining_stops,str(modified_genesequence),'Antoine',pos+relpostochange])
     
 def findRBS(genesequence,save):
     l=len(genesequence)
@@ -171,7 +173,7 @@ def findRBS(genesequence,save):
             treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],save)
 
 save = csv.writer(open("findoverlap.csv", "wb"))
-save.writerow(['Start position','Length of the Overlap','% protected','Frame','Number of bpchanged','Number of AA changed','Number of remaining STOPS''New seq'])
+save.writerow(['Start position','Length of the Overlap','% protected','Frame','Number of bpchanged','Number of AA changed','Number of remaining STOPS','New seq','non synonymous changes'])
 
 fasta_record = SeqIO.read(open("seqtest.fasta","r"),"fasta")
 bioseq=fasta_record.seq
