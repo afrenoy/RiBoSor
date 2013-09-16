@@ -147,16 +147,19 @@ def treatRBS(genesequence,pos,rbssequence,lspace,distAA,save):
 def findRBS(genesequence,save):
     l=len(genesequence)
     local=18 # RBS (6) + spacer (<=7) + ATG (3) arrondi au codon près
-    for pos in range(0,l-local): # For each position in the gene
-        print pos
-        candidate=genesequence[pos:pos+18] # We look at the 18 next nucleotides
+    for pos in range(0,l-local): # For each position in the gene, we try to start an RBS there
+        totreat=dict()
+        shift=pos%3
+        candidate=genesequence[pos-shift:pos-shift+18] # We look at the 18 next nucleotides
         assert (len(candidate)==18)
         codonliste=[candidate[k:k+3].tostring() for k in range(0,local,3)] # We transform the list of 18 nucleotides into a list of 6 codons
         allpossible=[allsyn[k]+[k] for k in codonliste]
         for synonymous_combination in itertools.product(*allpossible): # We look at each possible combination of synonymous changes
             syn_candidate=Seq(reduce(lambda x,y: x+y,synonymous_combination))
-            assert len(syn_candidate)==18
-            assert( str(syn_candidate.translate()) == str(candidate.translate()) )
+            rbs_candidate=syn_candidate[shift:]
+            nbps=[candidate[i]==x for (i,x) in enumerate(syn_candidate)].count(False)
+            #assert len(syn_candidate)==18
+            #assert( str(syn_candidate.translate()) == str(candidate.translate()) )
             # We calculate the score of this candidate. We have to be carreful that it can happens it is a good candidate for several different RBS configurations (different spacer sizes), so we want to find all the possible configurations
             allconfigs=evaluateRBS(str(syn_candidate),0)
             for (lspace,dist) in allconfigs:
