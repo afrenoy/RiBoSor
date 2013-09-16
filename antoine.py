@@ -161,9 +161,14 @@ def findRBS(genesequence,save):
             #assert len(syn_candidate)==18
             #assert( str(syn_candidate.translate()) == str(candidate.translate()) )
             # We calculate the score of this candidate. We have to be carreful that it can happens it is a good candidate for several different RBS configurations (different spacer sizes), so we want to find all the possible configurations
-            allconfigs=evaluateRBS(str(syn_candidate),0)
-            for (lspace,dist) in allconfigs:
-                treatRBS(genesequence,pos,syn_candidate,lspace,dist,save)
+            allconfigs=evaluateRBS(str(rbs_candidate), 1) # We allow RBS+spacer+ATG that have one nucleotide different from the consensus (can be turned into consensus making one non synonymous change)
+            for (lspace,mod_rbs_candidate,distN,relpostochange) in allconfigs:
+                if not totreat.has_key(mod_rbs_candidate) or totreat[mod_rbs_candidate][3]>nbps :
+                    totreat[mod_rbs_candidate]=(lspace,distN,relpostochange,nbps)
+        # Treat the best RBS we found
+        if totreat:
+            besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*100 + totreat[x][3]-totreat[y][3])[0]
+            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],save)
 
 save = csv.writer(open("findoverlap.csv", "wb"))
 save.writerow(['Start position','Length of the Overlap','% protected','Frame','Number of bpchanged','Number of AA changed','Number of remaining STOPS''New seq'])
