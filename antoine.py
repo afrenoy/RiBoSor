@@ -106,11 +106,26 @@ def evaluateRBS(sequence,maxdist):
     global lrbs
     global atg
     disttable=dict()
+    relativefirstpostochange=dict()
+    newsequence=dict()
     for lspace in range(minspace,maxspace+1):
-        drbs=[sequence[i]==x for (i,x) in enumerate(rbs)].count(False)
-        datg=[sequence[i+lrbs+lspace]==x for (i,x) in enumerate(atg)].count(False)
+        matchrbs=[sequence[i]==x for (i,x) in enumerate(rbs)]
+        drbs=matchrbs.count(False)
+        matchatg=[sequence[i+lrbs+lspace]==x for (i,x) in enumerate(atg)]
+        datg=matchatg.count(False)
         disttable[lspace]=(drbs+datg)
-    return [(lspace,dist) for (lspace,dist) in disttable.items() if dist<=maxdist]
+        if drbs>0:
+            relativefirstpostochange[lspace]=matchrbs.index(False)
+            newsequence[lspace]=list(sequence[:lrbs+lspace+3])
+            newsequence[lspace][relativefirstpostochange[lspace]]=rbs[relativefirstpostochange[lspace]]
+        elif datg>0:
+            relativefirstpostochange[lspace]=lrbs+lspace+matchatg.index(False)
+            newsequence[lspace]=list(sequence[:lrbs+lspace+3])
+            newsequence[lspace][relativefirstpostochange[lspace]]=atg[matchatg.index(False)]
+        else:
+            relativefirstpostochange[lspace]=-1
+            newsequence[lspace]=list(sequence[:lrbs+lspace+3])
+    return [(lspace,"".join(newsequence[lspace]),disttable[lspace],relativefirstpostochange[lspace]) for lspace in disttable.keys() if disttable[lspace]<=maxdist]
 
 def treatRBS(genesequence,pos,rbssequence,lspace,distAA,save):
     global rbs
