@@ -190,23 +190,15 @@ def findRBS(genesequence,save):
             rbs_candidate=syn_candidate[shift:]
             nbps=[candidate[i]==x for (i,x) in enumerate(syn_candidate)].count(False)
             assert (len(differ)==nbps)
-            #assert len(syn_candidate)==18
-            #assert( str(syn_candidate.translate()) == str(candidate.translate()) )
             # We calculate the score of this candidate. We have to be carreful that it can happens it is a good candidate for several different RBS configurations (different spacer sizes), so we want to find all the possible configurations
             allconfigs=evaluateRBS(str(rbs_candidate), 1) # We allow RBS+spacer+ATG that have one nucleotide different from the consensus (can be turned into consensus making one non synonymous change)
             for (len_spacer,mod_rbs_candidate,nb_nonsyn,pos_nonsyn) in allconfigs: # nb_nonsyn is 0 or 1, so pos_nonsyn is only one number
-                if not totreat.has_key(mod_rbs_candidate) or totreat[mod_rbs_candidate][3]>nbps or totreat[mod_rbs_candidate][1]>nb_nonsyn:
-                    if (pos==675):
-                        print nb_nonsyn
-                        print pos_nonsyn
-                        print nbps
+                if not totreat.has_key(mod_rbs_candidate) or totreat[mod_rbs_candidate][1]>nb_nonsyn or ( (totreat[mod_rbs_candidate][1]==nb_nonsyn) and (totreat[mod_rbs_candidate][3]>nbps) ):
                     totreat[mod_rbs_candidate]=(len_spacer,nb_nonsyn,pos_nonsyn,nbps,differ)
+                    # TODO: maybe index by rbs_candidate and not mod_rbs_candidate
         # Treat the best RBS we found
         if totreat:
             besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*100 + totreat[x][3]-totreat[y][3])[0]
-            #print str(pos)
-            #print str(totreat[besttotreat][1])
-            #print str(totreat[besttotreat][2])
             treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],save)
 
 save = csv.writer(open("findoverlap.csv", "wb"))
