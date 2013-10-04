@@ -202,7 +202,7 @@ def findRBS(genesequence,save):
             treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],save)
 
 save = csv.writer(open("findoverlap.csv", "wb"))
-save.writerow(['Start position','Length of the Overlap','% protected','Frame','Spacer','Number of base pair changed','Number of amino acid changes','Number of remaining STOPS','Algorithm','New sequence'])
+save.writerow(['Start position','Length of the Overlap','% protected','Frame','Spacer','Number of base pair changed','Number of amino acid changed','Number of remaining STOPS','Algorithm','New sequence'])
 
 fasta_record = SeqIO.read(open("seqtest.fasta","r"),"fasta")
 bioseq=fasta_record.seq
