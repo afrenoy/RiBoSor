@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python2.7
 # -*- coding:UTF-8 -*-
 
 from Bio import SeqIO
