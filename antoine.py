@@ -10,7 +10,7 @@ import os
 import re
 import argparse
 import sys
-sys.path.append('/Users/antoine/code/bioinfo')
+#sys.path.append('/Users/antoine/code/bioinfo')
 import tunestopfs
 
 # Parse the arguments
