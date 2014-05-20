@@ -8,17 +8,10 @@ import itertools
 import csv
 import os
 import re
-import argparse
+import getopt
 import sys
 #sys.path.append('/Users/antoine/code/bioinfo')
 import tunestopfs
-
-# Parse the arguments
-#parser = argparse.ArgumentParser(description='Turn DO(t) and Fluo(t) csv files into one Fluo(DO) csv file')
-#parser.add_argument("--do", type=str, help="input do file")
-#parser.add_argument("--fluo", type=str, help="input fluo file")
-#parser.add_argument("--output", type=str, help="output file")
-#args = parser.parse_args()
 
 ######################    Global variables   ########################
 
@@ -126,7 +119,7 @@ def evaluateRBS(sequence,maxdist):
     return [(len_spacer,"".join(newsequence[len_spacer]),disttable[len_spacer],relativefirstpostochange[len_spacer]) for len_spacer in disttable.keys() if disttable[len_spacer]<=maxdist]
 
 
-def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,save): # TODO: modify so it reports every change.
+def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,save,detaildir): # TODO: modify so it reports every change.
     # Compute the new sequence from the original sequence and the RBS-START
     global len_rbs
     posfirstcds=pos+len_rbs+len_spacer+3
@@ -145,7 +138,7 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     modified_genesequence=genesequence[:fr]+modified_end_genesequence
     
     # In one text file per RBS, output the detail of every changed nucleotide
-    file=open("findoverlap/"+str(pos)+".txt","w")
+    file=open(detaildir+"/"+str(pos)+".txt","w")
     
     # Starting with the possible non synonymous change made to create a perfect RBS-START
     if nb_nonsyn==1:
@@ -174,7 +167,7 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     save.writerow([pos,sizeoverlap,protection,shift,len_spacer,distBP,distAA,len(remaining_stops),'Antoine',str(modified_genesequence)])
     file.close()
     
-def findRBS(genesequence,save):
+def findRBS(genesequence,save,detaildir):
     l=len(genesequence)
     local=18 # RBS (6) + spacer (<=7) + ATG (3) arrondi au codon près
     for pos in range(0,l-local): # For each position in the gene, we try to start an RBS there
@@ -199,14 +192,20 @@ def findRBS(genesequence,save):
         # Treat the best RBS we found
         if totreat:
             besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*100 + totreat[x][3]-totreat[y][3])[0]
-            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],save)
+            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],save,detaildir)
 
-save = csv.writer(open("findoverlap.csv", "wb"))
+opts, args = getopt.getopt(sys.argv[1:], "", [])
+name=args[0]
+inputfilename=name+".fasta"
+outputfilename=name+".csv"
+detaildir=name
+
+save = csv.writer(open(outputfilename, "wb"))
 save.writerow(['Start position','Length of the Overlap','% protected','Frame','Spacer','Number of base pair changed','Number of amino acid changed','Number of remaining STOPS','Algorithm','New sequence'])
 
-fasta_record = SeqIO.read(open("seqtest.fasta","r"),"fasta")
+fasta_record = SeqIO.read(open(inputfilename,"r"),"fasta")
 bioseq=fasta_record.seq
 
-os.mkdir('findoverlap')
+os.mkdir(detaildir)
 
-findRBS(bioseq,save)
+findRBS(bioseq,save,detaildir)
