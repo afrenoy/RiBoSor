@@ -10,8 +10,7 @@ import os
 import re
 import getopt
 import sys
-#sys.path.append('/Users/antoine/code/bioinfo')
-import tunestopfs
+import startstop
 
 ######################    Global variables   ########################
 
@@ -209,3 +208,4 @@ bioseq=fasta_record.seq
 os.mkdir(detaildir)
 
 findRBS(bioseq,save,detaildir)
+
