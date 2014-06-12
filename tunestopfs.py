@@ -232,6 +232,103 @@ def removestopinframepx(s0,x,verbose=True):
     assert (bummer or (not '*' in tx))
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(tx) if A=='*'])
 
+def codonfold(sx):
+   assert (len(sx)%3==0)
+   if len(sx)==3:
+      return [sx]
+   return [sx[0:3]]+codonfold(sx[3:])
+
+def isstart(codon):
+   return codon=='ATG' or codon=='GTG' or codon=='TTG'
+
+def firststart(sfx,off=0):
+   if len(sfx)==0:
+      return -1
+   elif isstart(sfx[0]):
+      return off
+   else:
+      return firststart(sfx[1:],off+1)
+
+def findfirststart(sx, m=0):
+   sfx=codonfold(sx)
+   assert(len(sfx)>=m)
+   cand=firststart(sfx[m:])
+   if cand>-1:
+      return cand+m
+   else:
+      return -1
+
+def removestartinframepx(s0,x,verbose=True):
+    """Take a sequence and remove start codons in alternative frame with only synonymous changes in main frame"""
+    """The sequence is taken as a python string and NOT a BioSeq object"""
+    """Returns the modified sequence and the number of remaining starts"""
+    import itertools
+   
+    assert(type(s0)==str)
+    assert (x>0) and (x<3)
+    prot0=Seq(s0).translate()
+    l0=len(s0)
+    
+    sx=s0[x:l0-3+x]
+    pt=findfirststart(sx)
+    
+    bummer=False
+    
+    changedposition=[]
+    
+    # While there remains some start codons
+    while(pt>-1):
+        # Find the involved codons in s0
+        p1=pt*3
+        c1=s0[p1:p1+3]
+        c2=s0[p1+3:p1+6]
+        # Try to change them with synonymous
+        candfound=False
+        l1=list(SynonymousCodons[str(c1)])
+        l2=list(SynonymousCodons[str(c2)])
+        l1.append(str(c1))
+        l2.append(str(c2))
+        allcand=dict()
+        for cand1,cand2 in itertools.product(l1,l2):
+            new=list(s0)
+            new[p1:p1+3]=cand1[0:3]
+            new[p1+3:p1+6]=cand2[0:3]
+            news0="".join(new)
+            # Check whether the start codon has been removed in new sequence
+            newsx=news0[x:l0-3+x]
+            newpt=findfirststart(newsx,pt)
+            if (newpt>pt) or (newpt==-1):
+                candfound=True
+                # Calculate the number of BPS
+                allcand[(cand1,cand2)]=[(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False)
+        if candfound: # We found at least one candidate
+            # Find the best one (less BPS) among all possible candidates
+            (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u])[0]
+            changedposition=changedposition+[p1+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
+            new=list(s0)
+            new[p1:p1+3]=cand1[0:3]
+            new[p1+3:p1+6]=cand2[0:3]
+            news0="".join(new)
+            newsx=news0[x:l0-3+x]
+            newpt=findfirststart(newsx,pt)
+            assert(len(s0)==len(news0))
+            if verbose:
+                print "We removed start codon at position " + str(pt*3+x) + ". "
+            s0=news0
+            sx=newsx
+            pt=newpt
+        else:
+            bummer=True
+            if verbose:
+                print "Bummer ! We are unable to remove start codon at position " + str(pt*3+x) + ". Let's skip this one and go on."
+            pt=findfirststart(sx,pt+1)
+            continue
+    # We have removed all start codons in frame x
+    assert (str(Seq(s0).translate())==str(prot0))
+    assert (bummer or findfirststart(sx)==-1)
+    return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
+
+
 def frameshiftability(sequence):
     """Measuring the susceptibility for frameshifts due to runs of repeated nucleotides"""
     """The sequence is taken as a python string"""
