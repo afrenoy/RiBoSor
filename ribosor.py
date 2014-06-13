@@ -133,8 +133,9 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     assert len(genesequence[fr:])%3 == 0
     
     # Remove the stop codon that could exist in our new frame (APH) without modifying what is coded by the existing gene in main frame (GalK)
-    (modified_end_genesequence,changedposition,remaining_stops)=tunestopfs.removestopinframepx(genesequence[fr:],shift,False)
-    modified_genesequence=genesequence[:fr]+modified_end_genesequence
+    (end_genesequence_wostop,changedpositionstop,remaining_stops)=tunestopfs.removestopinframepx(genesequence[fr:],shift,False)
+    (end_genesequence_wostopstart,changedpositionstart,remaining_starts)=tunestopfs.removestartinframepx(end_genesequence_wostop,shift,False)
+    modified_genesequence=genesequence[:fr]+end_genesequence_wostopstart
     
     # In one text file per RBS, output the detail of every changed nucleotide
     file=open(detaildir+"/"+str(pos)+".txt","w")
@@ -151,19 +152,27 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
         file.write("At position " + str(i) + " replaced " + str(origgenesequence[i]) + " by " + str(genesequence[i]) + " (synonymous) to create a perfect RBS-START\n")
     
     # Output information about the synonymous changes we made to remove the stop codons
-    for p in changedposition:
+    for p in changedpositionstop:
         file.write("At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a STOP codon\n")
     
     # Output information about potential remaining STOP codons we were not able to remove
     for r in remaining_stops:
         file.write("At position " + str(r) + " unable to remove a STOP codon\n")
     
+    # Output information about the synonymous changes we made to remove the start codons
+    for p in changedpositionstart:
+        file.write("At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a START codon\n")
+    
+    # Output information about potential remaining START codons we were not able to remove
+    for r in remaining_starts:
+        file.write("At position " + str(r) + " unable to remove a START codon\n")
+ 
     # Compute other information we want about this overlap (number of syn/nonsyn changes, absolute and relative size, ...)
     distAA=[str(modified_genesequence.translate())[i] == x for (i,x) in enumerate(str(origgenesequence.translate()))].count(False)
     distBP=[modified_genesequence[i] == x for (i,x) in enumerate(origgenesequence)].count(False)
     sizeoverlap=(len(genesequence)-(pos+len_rbs+len_spacer))
-    protection=float(sizeoverlap)/len(genesequence)
-    save.writerow([pos,sizeoverlap,protection,shift,len_spacer,distBP,distAA,len(remaining_stops),'Antoine',str(modified_genesequence)])
+    proportion=float(sizeoverlap)/len(genesequence)
+    save.writerow([pos,sizeoverlap,proportion,shift,len_spacer,distBP,distAA,len(remaining_stops),'Antoine',str(modified_genesequence)])
     file.close()
     
 def findRBS(genesequence,save,detaildir):

@@ -170,7 +170,7 @@ def findfirststart(sx, m=0):
       return -1
 
 def removestartinframepx(s0,x,verbose=True):
-    """Take a sequence and remove start codons in alternative frame with only synonymous changes in main frame"""
+    """Take a sequence and remove start codons in alternative frame with only synonymous changes in main frame, without creating stop codons"""
     """The sequence is taken as a python string and NOT a BioSeq object"""
     """Returns the modified sequence and the number of remaining starts"""
     import itertools
@@ -179,7 +179,7 @@ def removestartinframepx(s0,x,verbose=True):
     assert (x>0) and (x<3)
     prot0=Seq(s0).translate()
     l0=len(s0)
-    
+    nstop=str(prot0).count('*') 
     sx=s0[x:l0-3+x]
     pt=findfirststart(sx)
     
@@ -208,7 +208,8 @@ def removestartinframepx(s0,x,verbose=True):
             # Check whether the start codon has been removed in new sequence
             newsx=news0[x:l0-3+x]
             newpt=findfirststart(newsx,pt)
-            if (newpt>pt) or (newpt==-1):
+            newnstop=str(Seq(news0).translate()).count('*')
+            if ((newpt>pt) or (newpt==-1)) and (newnstop<=nstop): # We removed one start and did not create one stop
                 candfound=True
                 # Calculate the number of BPS
                 allcand[(cand1,cand2)]=[(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False)
@@ -236,6 +237,7 @@ def removestartinframepx(s0,x,verbose=True):
             continue
     # We have removed all start codons in frame x
     assert (str(Seq(s0).translate())==str(prot0))
+    assert (str(Seq(s0).translate()).count('*')<=nstop) # Actually it is expected to be = and not <
     assert (bummer or findfirststart(sx)==-1)
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
