@@ -145,6 +145,8 @@ def removestopinframepx(s0,x,verbose=True):
 
 def codonfold(sx):
    assert (len(sx)%3==0)
+   if len(sx)==0:
+       return []
    if len(sx)==3:
       return [sx]
    return [sx[0:3]]+codonfold(sx[3:])
@@ -179,9 +181,10 @@ def removestartinframepx(s0,x,verbose=True):
     assert (x>0) and (x<3)
     prot0=Seq(s0).translate()
     l0=len(s0)
-    nstop=str(prot0).count('*') 
     sx=s0[x:l0-3+x]
     pt=findfirststart(sx)
+    
+    nstop=str(Seq(sx).translate()).count('*') 
     
     bummer=False
     
@@ -208,11 +211,14 @@ def removestartinframepx(s0,x,verbose=True):
             # Check whether the start codon has been removed in new sequence
             newsx=news0[x:l0-3+x]
             newpt=findfirststart(newsx,pt)
-            newnstop=str(Seq(news0).translate()).count('*')
+            newnstop=str(Seq(newsx).translate()).count('*')
             if ((newpt>pt) or (newpt==-1)) and (newnstop<=nstop): # We removed one start and did not create one stop
                 candfound=True
                 # Calculate the number of BPS
                 allcand[(cand1,cand2)]=[(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False)
+                if newnstop<nstop:
+                    print "Weird ! While our stop-removing algorithm did not manage to remove a stop around position " + str(pt*3+x) + ", our  start-removing algorithm somehow manage to remove this stop."
+                    nstop=newnstop
         if candfound: # We found at least one candidate
             # Find the best one (less BPS) among all possible candidates
             (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u])[0]
@@ -237,7 +243,7 @@ def removestartinframepx(s0,x,verbose=True):
             continue
     # We have removed all start codons in frame x
     assert (str(Seq(s0).translate())==str(prot0))
-    assert (str(Seq(s0).translate()).count('*')<=nstop) # Actually it is expected to be = and not <
+    assert (str(Seq(sx).translate()).count('*')<=nstop) # Actually it is expected to be = and not <
     assert (bummer or findfirststart(sx)==-1)
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
