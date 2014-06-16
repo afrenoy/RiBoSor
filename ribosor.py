@@ -157,7 +157,7 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     
     # Output information about potential remaining STOP codons we were not able to remove
     for r in remaining_stops:
-        file.write("At position " + str(r) + " unable to remove a STOP codon\n")
+        file.write("At position " + str(fr+r) + " unable to remove a STOP codon\n")
     
     # Output information about the synonymous changes we made to remove the start codons
     for p in changedpositionstart:
@@ -165,7 +165,7 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     
     # Output information about potential remaining START codons we were not able to remove
     for r in remaining_starts:
-        file.write("At position " + str(r) + " unable to remove a START codon\n")
+        file.write("At position " + str(fr+r) + " unable to remove a START codon\n")
  
     # Compute other information we want about this overlap (number of syn/nonsyn changes, absolute and relative size, ...)
     distAA=[str(modified_genesequence.translate())[i] == x for (i,x) in enumerate(str(origgenesequence.translate()))].count(False)
