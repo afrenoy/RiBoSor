@@ -15,7 +15,7 @@ import startstop
 ######################    Global variables   ########################
 
 #****** Fonction codon synonymes ******
-allsyn=tunestopfs.SynonymousCodons
+allsyn=startstop.SynonymousCodons
 
 #****** Fonction codon similaires ******
 allnonsyn=dict()
@@ -133,9 +133,9 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     assert len(genesequence[fr:])%3 == 0
     
     # Remove the stop codon that could exist in our new frame (APH) without modifying what is coded by the existing gene in main frame (GalK)
-    (end_genesequence_wostop,changedpositionstop,remaining_stops)=tunestopfs.removestopinframepx(genesequence[fr:],shift,False)
-    (end_genesequence_wostopstart,changedpositionstart,remaining_starts)=tunestopfs.removestartinframepx(end_genesequence_wostop,shift,False)
-    modified_genesequence=genesequence[:fr]+end_genesequence_wostopstart
+    (end_genesequence_wostop,changedpositionstop,remaining_stops)=startstop.removestopinframepx(genesequence[fr:],shift,False)
+    (end_genesequence_wostopstart,changedpositionstart,remaining_starts)=startstop.removestartinframepx(str(end_genesequence_wostop),shift,False)
+    modified_genesequence=genesequence[:fr]+Seq(end_genesequence_wostopstart)
     
     # In one text file per RBS, output the detail of every changed nucleotide
     file=open(detaildir+"/"+str(pos)+".txt","w")
