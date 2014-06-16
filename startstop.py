@@ -247,22 +247,3 @@ def removestartinframepx(s0,x,verbose=True):
     assert (bummer or findfirststart(sx)==-1)
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
-def optimizeoverlapfusion(sequence, frame):
-    """Optimize the overlapped part of our construct according to the following criteria:
-    Constraints:
-    1) Do not create STOP codon in the frame of the downstream gene
-    2) Do not create ATG in the frame of the downstream gene
-    3) Only make synonymous changes in the frame of the upstream gene
-    Optimization goal:
-    1) STOP codons are less accessible by BPS in the frame of the upstream gene
-    2) The sequence is more prone to create frame shifts
-    Inputs:
-    sequence is given in the frame of the upstream gene.
-    frame is the shift necessary to get the frame of the downstream gene.
-    """
-    """The sequence is taken as a BioSeq object and not as a python string"""
-    protup=sequence.translate()
-    lseq=len(sequence)
-    sshift=sequence[frame:lseq]
-    protdown=sshift.translate()
-    
