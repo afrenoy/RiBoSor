@@ -171,6 +171,11 @@ def findfirststart(sx, m=0):
    else:
       return -1
 
+def countstart(sx):
+    sfx=codonfold(sx)
+    return len([c for c in sfx if isstart(c)])
+
+
 def removestartinframepx(s0,x,verbose=True):
     """Take a sequence and remove start codons in alternative frame with only synonymous changes in main frame, without creating stop codons"""
     """The sequence is taken as a python string and NOT a BioSeq object"""
@@ -247,3 +252,52 @@ def removestartinframepx(s0,x,verbose=True):
     assert (bummer or findfirststart(sx)==-1)
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
+
+def removeFShotspots2frame(sequence,frame,verbose=True):
+    """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame."""
+    """Input is a python string and not a BioSeq object"""
+    import itertools
+    from sys import path 
+    path.append('/Users/antoine/code/bioinfo')
+    import tunestopfs
+    
+    # Check consistency of inputs
+    assert(type(sequence)==str)
+    assert (frame>0) and (frame<3)
+
+    # Record initial number of starts and stops in alternative frame (+frame)
+    protein=Seq(sequence).translate()
+    l0=len(sequence)
+    sx=sequence[frame:l0-3+frame]
+    initnbstarts=countstart(sx)
+    initnbstops=str(Seq(sx).translate()).count('*') 
+    
+    # Find all runs
+    initsequence=sequence
+    nbrepeats = tunestopfs.frameshiftability(sequence)
+    startrepeats = [i-1 for (i,x) in enumerate(nbrepeats) if x==2]
+    
+    # Try to eliminate them 
+    for firstpos in startrepeats:
+        nucl=sequence[firstpos]
+        i=firstpos+1
+        while (i<=len(sequence)-1 and sequence[i]==nucl):
+            i=i+1
+        lastpos=i-1
+        codons = [sequence[k:k+3] for k in range(firstpos-firstpos%3,lastpos-lastpos%3+1,3)]
+        prefixe=''
+        suffixe=''
+        if firstpos>=3:
+            prefixe=sequence[firstpos-firstpos%3-3:firstpos-firstpos%3]
+        if lastpos<=len(sequence)-4:
+            suffixe=sequence[lastpos-lastpos%3+3:lastpos-lastpos%3+6]
+        lcontext=len(suffixe)+len(prefixe)+len(codons)*3
+        allpossible = [SynonymousCodons[k]+[k] for k in codons]
+        allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),itertools.product(*allpossible))
+        allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=initnbstarts and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=initnbstops,allcombination)
+        bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination+suffixe))
+        l=list(sequence)
+        l[firstpos-firstpos%3:lastpos-lastpos%3+3]=bestcombination
+        sequence=str('').join(l)
+    assert(str(Seq(initsequence).translate())==str(Seq(sequence).translate()))
+    return(sequence,tunestopfs.frameshiftability_score(sequence))
