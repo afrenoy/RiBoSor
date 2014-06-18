@@ -253,7 +253,7 @@ def removestartinframepx(s0,x,verbose=True):
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
 
-def removeFShotspots2frame(sequence,frame,verbose=True):
+def removeFShotspots2frame(sequence,frame,maxlrun,verbose=True):
     """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame."""
     """Input is a python string and not a BioSeq object"""
     import itertools
@@ -264,6 +264,7 @@ def removeFShotspots2frame(sequence,frame,verbose=True):
     # Check consistency of inputs
     assert(type(sequence)==str)
     assert (frame>0) and (frame<3)
+    assert(maxlrun>1)
 
     # Record initial number of starts and stops in alternative frame (+frame)
     protein=Seq(sequence).translate()
@@ -275,7 +276,7 @@ def removeFShotspots2frame(sequence,frame,verbose=True):
     # Find all runs
     initsequence=sequence
     nbrepeats = tunestopfs.frameshiftability(sequence)
-    startrepeats = [i-1 for (i,x) in enumerate(nbrepeats) if x==2]
+    startrepeats = [i+1-maxlrun for (i,x) in enumerate(nbrepeats) if x==maxlrun]
     
     # Try to eliminate them 
     for firstpos in startrepeats:
@@ -296,6 +297,8 @@ def removeFShotspots2frame(sequence,frame,verbose=True):
         allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),itertools.product(*allpossible))
         allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=initnbstarts and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=initnbstops,allcombination)
         bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination+suffixe))
+        #print [x==sequence[firstpos-firstpos%3+i] for (i,x) in enumerate(bestcombination)].count(False)
+        #could be use as a criteria to refine above metric: when equals in frameshiftability, we could choose the combination that minimizes the number of (synonymous) BPS made.
         l=list(sequence)
         l[firstpos-firstpos%3:lastpos-lastpos%3+3]=bestcombination
         sequence=str('').join(l)
