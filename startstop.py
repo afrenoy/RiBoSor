@@ -328,8 +328,8 @@ def removeFShotspots2frame(sequence,frame,maxlrun):
     # Assert that we did not created start/stop in alternative frame
     finalnbstarts=countstart(sequence[frame:l0-3+frame])
     finalnbstops=str(Seq(sequence[frame:l0-3+frame]).translate()).count('*')
-    assert(finalnbstarts==initnbstarts) # warning: not tolerant
-    assert(finalnbstops==initnbstops) # warning: not tolerant
+    assert(finalnbstarts<=initnbstarts) # warning: not tolerant
+    assert(finalnbstops<=initnbstops) # warning: not tolerant
 
     # return the new sequence and the remaining hotspots
     newnbrepeats = tunestopfs.frameshiftability(sequence)
