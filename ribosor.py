@@ -169,13 +169,15 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     
     if removefs:
         # Remove FS hotspots (eveywhere, not only in the overlapping sequence)
-        (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4,False)
-        for pn in [i for (i,x) in enumerate(modified_genesequence) if not x==nofs_sequence(i)]:
+        (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4)
+        for pn in [i for (i,x) in enumerate(str(modified_genesequence)) if not x==nofs_sequence[i]]:
             file.write("At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
 
         # Output information about potential FS hotspots we were not able to remove
         for pn in remaininghotspots:
             file.write("At position " + str(pn) + " unable to remove a FS hotspot\n")
+
+        modified_genesequence = Seq(nofs_sequence)
 
     # Compute other information we want about this overlap (number of syn/nonsyn changes, absolute and relative size, ...)
     distAA=[str(modified_genesequence.translate())[i] == x for (i,x) in enumerate(str(origgenesequence.translate()))].count(False)
