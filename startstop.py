@@ -253,7 +253,7 @@ def removestartinframepx(s0,x,verbose=True):
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
 
-def removeFShotspots2frame(sequence,frame,maxlrun,verbose=True):
+def removeFShotspots2frame(sequence,frame,maxlrun):
     """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame."""
     """Input is a python string and not a BioSeq object"""
     import itertools
@@ -280,30 +280,58 @@ def removeFShotspots2frame(sequence,frame,maxlrun,verbose=True):
     
     # Try to eliminate them 
     for firstpos in startrepeats:
+        
+        # Find the involved codons in 'main' frame
         nucl=sequence[firstpos]
         i=firstpos+1
         while (i<=len(sequence)-1 and sequence[i]==nucl):
             i=i+1
         lastpos=i-1
         codons = [sequence[k:k+3] for k in range(firstpos-firstpos%3,lastpos-lastpos%3+1,3)]
+        
+        # Find the preceding and following codons because: they can also be used to avoid creating start/stop in alternative frame, and will be used to avoid creating a new frameshift hotspot.
         prefixe=''
         suffixe=''
         if firstpos>=3:
             prefixe=sequence[firstpos-firstpos%3-3:firstpos-firstpos%3]
         if lastpos<=len(sequence)-4:
             suffixe=sequence[lastpos-lastpos%3+3:lastpos-lastpos%3+6]
+
+        # Record the number of start and stop in alternative frame of local sequence before making changes
+        localseqbefore=prefixe+reduce(lambda x,y: x+y, codons)+suffixe
         lcontext=len(suffixe)+len(prefixe)+len(codons)*3
+        assert(len(localseqbefore)==lcontext)
+        nbstartsbefore=countstart(localseqbefore[frame:lcontext-3+frame])
+        nbstopsbefore=str(Seq(localseqbefore[frame:lcontext-3+frame]).translate()).count('*')
+
+        # Generate all the possible combinations of synonymous codons and the corresponding local sequence 
         allpossible = [SynonymousCodons[k]+[k] for k in codons]
         allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),itertools.product(*allpossible))
-        allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=initnbstarts and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=initnbstops,allcombination)
+
+        # Only keep the combinations that do not create start/stop in alternative frame
+        allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
+
+        # Sort them according to potentiallity for frame shifts
         bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination+suffixe))
         #could be use as a criteria to refine above metric: when equals in frameshiftability, we could choose the combination that minimizes the number of (synonymous) BPS made.
         #print [x==sequence[firstpos-firstpos%3+i] for (i,x) in enumerate(bestcombination)].count(False)
+
+        # Take the best combination and replace appropriate nucleotides in sequence
         l=list(sequence)
         l[firstpos-firstpos%3:lastpos-lastpos%3+3]=bestcombination
         sequence=str('').join(l)
+
+    # Assert that we only made synonymous changes
+    assert(len(sequence)==l0)
     assert(str(Seq(initsequence).translate())==str(Seq(sequence).translate()))
+
+    # Assert that we did not created start/stop in alternative frame
+    finalnbstarts=countstart(sequence[frame:l0-3+frame])
+    finalnbstops=str(Seq(sequence[frame:l0-3+frame]).translate()).count('*')
+    assert(finalnbstarts==initnbstarts) # warning: not tolerant
+    assert(finalnbstops==initnbstops) # warning: not tolerant
+
+    # return the new sequence and the remaining hotspots
     newnbrepeats = tunestopfs.frameshiftability(sequence)
-    #nbremaininghotspots=newnbrepeats.count(maxlrun)
     remaininghotspots = [i+1-maxlrun for (i,x) in enumerate(newnbrepeats) if x==maxlrun]
     return(sequence,remaininghotspots)
