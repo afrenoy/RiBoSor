@@ -118,7 +118,7 @@ def evaluateRBS(sequence,maxdist):
     return [(len_spacer,"".join(newsequence[len_spacer]),disttable[len_spacer],relativefirstpostochange[len_spacer]) for len_spacer in disttable.keys() if disttable[len_spacer]<=maxdist]
 
 
-def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,save,detaildir): # TODO: modify so it reports every change.
+def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,removefs,save,detaildir): # TODO: modify so it reports every change.
     # Compute the new sequence from the original sequence and the RBS-START
     global len_rbs
     posfirstcds=pos+len_rbs+len_spacer+3
@@ -166,7 +166,17 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     # Output information about potential remaining START codons we were not able to remove
     for r in remaining_starts:
         file.write("At position " + str(fr+r) + " unable to remove a START codon\n")
- 
+    
+    if removefs:
+        # Remove FS hotspots (eveywhere, not only in the overlapping sequence)
+        (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4,False)
+        for pn in [i for (i,x) in enumerate(modified_genesequence) if not x==nofs_sequence(i)]:
+            file.write("At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
+
+        # Output information about potential FS hotspots we were not able to remove
+        for pn in remaininghotspots:
+            file.write("At position " + str(pn) + " unable to remove a FS hotspot\n")
+
     # Compute other information we want about this overlap (number of syn/nonsyn changes, absolute and relative size, ...)
     distAA=[str(modified_genesequence.translate())[i] == x for (i,x) in enumerate(str(origgenesequence.translate()))].count(False)
     distBP=[modified_genesequence[i] == x for (i,x) in enumerate(origgenesequence)].count(False)
@@ -200,7 +210,7 @@ def findRBS(genesequence,save,detaildir):
         # Treat the best RBS we found
         if totreat:
             besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*100 + totreat[x][3]-totreat[y][3])[0]
-            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],save,detaildir)
+            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],True,save,detaildir)
 
 opts, args = getopt.getopt(sys.argv[1:], "", [])
 name=args[0]
