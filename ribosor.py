@@ -118,7 +118,7 @@ def evaluateRBS(sequence,maxdist):
     return [(len_spacer,"".join(newsequence[len_spacer]),disttable[len_spacer],relativefirstpostochange[len_spacer]) for len_spacer in disttable.keys() if disttable[len_spacer]<=maxdist]
 
 
-def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,removefs,save,detaildir): # TODO: modify so it reports every change.
+def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,removestart,removefs,save,detaildir): # TODO: modify so it reports every change.
     # Compute the new sequence from the original sequence and the RBS-START
     global len_rbs
     posfirstcds=pos+len_rbs+len_spacer+3
@@ -132,14 +132,24 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     # We do not start at posfirtscds-shift otherwise we would risk to modify the RBS we just created.
     assert len(genesequence[fr:])%3 == 0
     
-    # Remove the stop codons that could exist in our new frame (APH, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
+    # Remove the stop codons that could exist in our new frame (aph, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
     (end_genesequence_wostop,changedpositionstop,remaining_stops)=startstop.removestopinframepx(genesequence[fr:],shift,False)
 
-    # Remove the start codons that could exist in our new frame (APH, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
-    # Question: should we also remove start codons before ?
-    (end_genesequence_wostopstart,changedpositionstart,remaining_starts)=startstop.removestartinframepx(str(end_genesequence_wostop),shift,False)
-    modified_genesequence=genesequence[:fr]+Seq(end_genesequence_wostopstart)
-    
+    # Remove the start codons that could exist in our new frame (aph) without modifying what is coded by the existing gene in main frame (GalK)
+    if (removestart==1): # We only remove starts after the ATG of aph
+        (end_genesequence_wostopstart,changedpositionstart,remaining_starts)=startstop.removestartinframepx(str(end_genesequence_wostop),shift,False)
+        modified_genesequence=genesequence[:fr]+Seq(end_genesequence_wostopstart)
+    elif (removestart==2): # We also remove starts before the ATG of aph
+        (end_genesequence_wostopstart,rel_changedpositionstart,rel_remaining_starts)=startstop.removestartinframepx(str(end_genesequence_wostop),shift,False)
+        (start_genesequence_wostart,abs_changedpositionstart,abs_remaining_starts)=startstop.removestartinframepx(str(genesequence[:pos-pos%3]),shift,False)
+        modified_genesequence=Seq(start_genesequence_wostart) + genesequence[pos-pos%3:fr] + Seq(end_genesequence_wostopstart)
+        changedpositionstart=[x-fr for x in abs_changedpositionstart]+rel_changedpositionstart
+        remaining_starts=[x-fr for x in abs_remaining_starts]+rel_remaining_starts
+    else: # We do not remove starts at all 
+        modified_genesequence=genesequence[:fr]+end_genesequence_wostop
+        changedpositionstart=[]
+        remaining_starts=[]
+
     # In one text file per RBS, output the detail of every changed nucleotide
     file=open(detaildir+"/"+str(pos)+".txt","w")
     
@@ -215,7 +225,7 @@ def findRBS(genesequence,save,detaildir):
         # Treat the best RBS we found
         if totreat:
             besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*100 + totreat[x][3]-totreat[y][3])[0]
-            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],True,save,detaildir)
+            treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],2,True,save,detaildir)
 
 opts, args = getopt.getopt(sys.argv[1:], "", [])
 name=args[0]
