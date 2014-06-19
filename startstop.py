@@ -297,10 +297,13 @@ def removeFShotspots2frame(sequence,frame,maxlrun,verbose=True):
         allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),itertools.product(*allpossible))
         allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=initnbstarts and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=initnbstops,allcombination)
         bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination+suffixe))
-        #print [x==sequence[firstpos-firstpos%3+i] for (i,x) in enumerate(bestcombination)].count(False)
         #could be use as a criteria to refine above metric: when equals in frameshiftability, we could choose the combination that minimizes the number of (synonymous) BPS made.
+        #print [x==sequence[firstpos-firstpos%3+i] for (i,x) in enumerate(bestcombination)].count(False)
         l=list(sequence)
         l[firstpos-firstpos%3:lastpos-lastpos%3+3]=bestcombination
         sequence=str('').join(l)
     assert(str(Seq(initsequence).translate())==str(Seq(sequence).translate()))
-    return(sequence,tunestopfs.frameshiftability_score(sequence))
+    newnbrepeats = tunestopfs.frameshiftability(sequence)
+    #nbremaininghotspots=newnbrepeats.count(maxlrun)
+    remaininghotspots = [i+1-maxlrun for (i,x) in enumerate(newnbrepeats) if x==maxlrun]
+    return(sequence,remaininghotspots)
