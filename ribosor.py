@@ -172,7 +172,7 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     
     if removefs:
         # Remove FS hotspots (eveywhere, not only in the overlapping sequence)
-        (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4)
+        (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4,pos,pos+len_rbs+len_spacer+3)
         for pn in [i for (i,x) in enumerate(str(modified_genesequence)) if not x==nofs_sequence[i]]:
             file.write("At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
 

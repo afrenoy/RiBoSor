@@ -253,7 +253,7 @@ def removestartinframepx(s0,x,verbose=True):
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(codonfold(sx)) if isstart(A)])
 
 
-def removeFShotspots2frame(sequence,frame,maxlrun):
+def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
     """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame."""
     """Input is a python string and not a BioSeq object"""
     import itertools
@@ -265,6 +265,7 @@ def removeFShotspots2frame(sequence,frame,maxlrun):
     assert(type(sequence)==str)
     assert (frame>0) and (frame<3)
     assert(maxlrun>1)
+    assert(begconserve<endconserve)
 
     # Record initial number of starts and stops in alternative frame (+frame)
     protein=Seq(sequence).translate()
@@ -281,12 +282,18 @@ def removeFShotspots2frame(sequence,frame,maxlrun):
     # Try to eliminate them 
     for firstpos in startrepeats:
         
-        # Find the involved codons in 'main' frame
+        # Find end position
         nucl=sequence[firstpos]
         i=firstpos+1
         while (i<=len(sequence)-1 and sequence[i]==nucl):
             i=i+1
         lastpos=i-1
+        
+        # If this run involves the part of the sequence that should be conserved (RBS-start) then we skip it
+        if (firstpos-firstpos%3-3<=endconserve) and (lastpos-lastpos%3+6>=begconserve):
+            continue
+
+        # Find the involved codons in 'main' frame
         codons = [sequence[k:k+3] for k in range(firstpos-firstpos%3,lastpos-lastpos%3+1,3)]
         
         # Find the preceding and following codons because: they can also be used to avoid creating start/stop in alternative frame, and will be used to avoid creating a new frameshift hotspot.
