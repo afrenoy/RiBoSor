@@ -132,8 +132,11 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     # We do not start at posfirtscds-shift otherwise we would risk to modify the RBS we just created.
     assert len(genesequence[fr:])%3 == 0
     
-    # Remove the stop codon that could exist in our new frame (APH) without modifying what is coded by the existing gene in main frame (GalK)
+    # Remove the stop codons that could exist in our new frame (APH, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
     (end_genesequence_wostop,changedpositionstop,remaining_stops)=startstop.removestopinframepx(genesequence[fr:],shift,False)
+
+    # Remove the start codons that could exist in our new frame (APH, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
+    # Question: should we also remove start codons before ?
     (end_genesequence_wostopstart,changedpositionstart,remaining_starts)=startstop.removestartinframepx(str(end_genesequence_wostop),shift,False)
     modified_genesequence=genesequence[:fr]+Seq(end_genesequence_wostopstart)
     
