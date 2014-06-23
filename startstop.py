@@ -221,9 +221,6 @@ def removestartinframepx(s0,x,verbose=True):
                 candfound=True
                 # Calculate the number of BPS
                 allcand[(cand1,cand2)]=[(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False)
-                if newnstop<nstop:
-                    print "Weird ! While our stop-removing algorithm did not manage to remove a stop around position " + str(pt*3+x) + ", our  start-removing algorithm somehow manage to remove this stop."
-                    nstop=newnstop
         if candfound: # We found at least one candidate
             # Find the best one (less BPS) among all possible candidates
             (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u])[0]
@@ -234,6 +231,9 @@ def removestartinframepx(s0,x,verbose=True):
             news0="".join(new)
             newsx=news0[x:l0-3+x]
             newpt=findfirststart(newsx,pt)
+            newnstop=str(Seq(newsx).translate()).count('*')
+            if newnstop<nstop:
+                nstop=newnstop
             assert(len(s0)==len(news0))
             if verbose:
                 print "We removed start codon at position " + str(pt*3+x) + ". "
