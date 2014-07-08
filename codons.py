@@ -131,3 +131,16 @@ SynonymousCodons = {
         'TAT': ['TAC']
 }
 
+def smartcodonproduct(*args):
+    pools=map(tuple,args)
+    result=[[]]
+    position=[[]]
+    for pool in pools:
+        result=[x+[y] for x in result for y in pool]
+        position=[i+[j] for i in position for (j,y) in enumerate(pool)]
+    score=[max(x)+sum(x) for x in position]
+    combination=zip(score,result)
+    s=sorted(combination,key=lambda x: x[0])
+    sortedresults=[x[1] for x in s]
+    return sortedresults
+

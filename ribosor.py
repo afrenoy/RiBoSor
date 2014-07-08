@@ -11,10 +11,10 @@ import re
 import getopt
 import sys
 import startstop
-import codons
+import codons as codonsfun
 
-allsyn=codons.SynonymousCodons
-allnonsyn=codons.NonSynonymousCodons
+allsyn=codonsfun.SynonymousCodons
+allnonsyn=codonsfun.NonSynonymousCodons
 
 minspace=3
 maxspace=7
@@ -143,7 +143,7 @@ def findRBS(genesequence,save,detaildir):
         assert (len(candidate)==18)
         codonliste=[candidate[k:k+3].tostring() for k in range(0,local,3)] # We transform the list of 18 nucleotides into a list of 6 codons
         allpossible=[allsyn[k]+[k] for k in codonliste]
-        for synonymous_combination in itertools.product(*allpossible): # We look at each possible combination of synonymous changes
+        for synonymous_combination in codonsfun.smartcodonproduct(*allpossible): # We look at each possible combination of synonymous changes
             syn_candidate=Seq(reduce(lambda x,y: x+y,synonymous_combination))
             differ=set([i+pos-shift for (i,x) in enumerate(candidate) if syn_candidate[i]!=x])
             rbs_candidate=syn_candidate[shift:]

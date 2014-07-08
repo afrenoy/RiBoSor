@@ -1,9 +1,9 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
 
-import codons
-SynonymousCodons=codons.SynonymousCodons
-allnonsyn=codons.NonSynonymousCodons
+import codons as codonsfun
+SynonymousCodons=codonsfun.SynonymousCodons
+allnonsyn=codonsfun.NonSynonymousCodons
 
 
 def removestopinframepx(s0,x,verbose=True):
@@ -37,7 +37,7 @@ def removestopinframepx(s0,x,verbose=True):
         l1.append(str(c1))
         l2.append(str(c2))
         allcand=dict()
-        for cand1,cand2 in itertools.product(l1,l2):
+        for cand1,cand2 in codonsfun.smartcodonproduct(l1,l2):
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
             new[p1+3:p1+6]=cand2[0:3]
@@ -144,7 +144,7 @@ def removestartinframepx(s0,x,verbose=True):
         l1.append(str(c1))
         l2.append(str(c2))
         allcand=dict()
-        for cand1,cand2 in itertools.product(l1,l2):
+        for cand1,cand2 in codonsfun.smartcodonproduct(l1,l2):
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
             new[p1+3:p1+6]=cand2[0:3]
@@ -249,7 +249,7 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
 
         # Generate all the possible combinations of synonymous codons and the corresponding local sequence 
         allpossible = [SynonymousCodons[k]+[k] for k in codons]
-        allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),itertools.product(*allpossible))
+        allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),codonsfun.smartcodonproduct(*allpossible))
 
         # Only keep the combinations that do not create start/stop in alternative frame
         allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
