@@ -11,77 +11,10 @@ import re
 import getopt
 import sys
 import startstop
+import codons
 
-######################    Global variables   ########################
-
-#****** Fonction codon synonymes ******
-allsyn=startstop.SynonymousCodons
-
-#****** Fonction codon similaires ******
-allnonsyn=dict()
-
-allnonsyn['TTC']=['TAT','TAC','TGG','TGG','ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT']
-allnonsyn['TTT']=['TAT','TAC','TGG','TGG','ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT']
-allnonsyn['TTG']=['ATC','ATA','ATT','ATG','GTC','GTA','GTG', 'GTT','TTT','TTC']
-allnonsyn['TTA']=['ATC','ATA','ATT','ATG','GTC','GTA','GTG', 'GTT','TTT','TTC']
-allnonsyn['CTT']=['ATC','ATA','ATT','ATG','GTC','GTA','GTG', 'GTT','TTT','TTC']
-allnonsyn['CTC']=['ATC','ATA','ATT','ATG','GTC','GTA','GTG', 'GTT','TTT','TTC']
-allnonsyn['CTA']=['ATC','ATA','ATT','ATG','GTC','GTA','GTG', 'GTT','TTT','TTC']
-allnonsyn['CTG']=['ATC','ATA','ATT','ATG','GTC','GTA','GTG', 'GTT','TTT','TTC']
-allnonsyn['ATT']= ['GTC','GTA','GTG', 'GTT','TTG','TTA','CTC','CTG', 'CTA','CTT','TTT','TTC','TGT','TGC']
-allnonsyn['ATC']= ['GTC','GTA','GTG', 'GTT','TTG','TTA','CTC','CTG', 'CTA','CTT','TTT','TTC','TGT','TGC']
-allnonsyn['ATA']= ['GTC','GTA','GTG', 'GTT','TTG','TTA','CTC','CTG', 'CTA','CTT','TTT','TTC','TGT','TGC']
-allnonsyn['ATG']= ['GTC','GTA','GTG', 'GTT','TTG','TTA','CTC','CTG', 'CTA','CTT','TTT','TTC','TGT','TGC']
-allnonsyn['GTT']= ['ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT','ATG','GCT','GCC','GCA','GCG']
-allnonsyn['GTC']= ['ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT','ATG','GCT','GCC','GCA','GCG']
-allnonsyn['GTA']= ['ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT','ATG','GCT','GCC','GCA','GCG']
-allnonsyn['GTG']= ['ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT','ATG','GCT','GCC','GCA','GCG']
-allnonsyn['TCT']= ['ACC','ACT','ACA','ACG', 'GCT','GCC','GCA','GCG','AAC','AAT','GAC','GAT']
-allnonsyn['TCC']= ['ACC','ACT','ACA','ACG', 'GCT','GCC','GCA','GCG','AAC','AAT','GAC','GAT']
-allnonsyn['TCA']= ['ACC','ACT','ACA','ACG', 'GCT','GCC','GCA','GCG','AAC','AAT','GAC','GAT']
-allnonsyn['TCG']= ['ACC','ACT','ACA','ACG', 'GCT','GCC','GCA','GCG','AAC','AAT','GAC','GAT']
-allnonsyn['CCT']= ['GCT','GCC','GCA','GCG','GAC','GAT','CAG','CAA','GAA','GAG']
-allnonsyn['CCC']= ['GCT','GCC','GCA','GCG','GAC','GAT','CAG','CAA','GAA','GAG']
-allnonsyn['CCA']= ['GCT','GCC','GCA','GCG','GAC','GAT','CAG','CAA','GAA','GAG']
-allnonsyn['CCG']= ['GCT','GCC','GCA','GCG','GAC','GAT','CAG','CAA','GAA','GAG']
-allnonsyn['ACT']= ['TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GTC','GTA','GTG', 'GTT','GAA','GAG','GGG','GGC','GGA','GGT']
-allnonsyn['ACC']= ['TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GTC','GTA','GTG', 'GTT','GAA','GAG','GGG','GGC','GGA','GGT']
-allnonsyn['ACA']= ['TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GTC','GTA','GTG', 'GTT','GAA','GAG','GGG','GGC','GGA','GGT']
-allnonsyn['ACG']= ['TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GTC','GTA','GTG', 'GTT','GAA','GAG','GGG','GGC','GGA','GGT']
-allnonsyn['GCT']= ['GTC','GTA','GTG', 'GTT','GGG','GGC','GGA','GGT','TGT','TGC','ACC','ACT','ACA','ACG']
-allnonsyn['GCC']= ['GTC','GTA','GTG', 'GTT','GGG','GGC','GGA','GGT','TGT','TGC','ACC','ACT','ACA','ACG']
-allnonsyn['GCA']= ['GTC','GTA','GTG', 'GTT','GGG','GGC','GGA','GGT','TGT','TGC','ACC','ACT','ACA','ACG']
-allnonsyn['GCG']= ['GTC','GTA','GTG', 'GTT','GGG','GGC','GGA','GGT','TGT','TGC','ACC','ACT','ACA','ACG']
-allnonsyn['TAT']= ['TGG','TGG','ATG','TTG','TTA','CTC','CTG', 'CTA','CTT','ATC','ATA','ATT']
-allnonsyn['TAC']= ['TGG','TGG','ATG','TTG','TTA','CTC','CTG', 'CTA','CTT','ATC','ATA','ATT']
-allnonsyn['CAT']= ['TAT','TAC','AGG','CGC','CGA','CGT','AGA','CGC','AAC','AAT','GAA','GAG']
-allnonsyn['CAC']= ['TAT','TAC','AGG','CGC','CGA','CGT','AGA','CGC','AAC','AAT','GAA','GAG']
-allnonsyn['CAA']= ['AGG','CGC','CGA','CGT','AGA','CGC','AAC','AAT','GAC','GAT','CAT','CAC']
-allnonsyn['CAG']= ['AGG','CGC','CGA','CGT','AGA','CGC','AAC','AAT','GAC','GAT','CAT','CAC']
-allnonsyn['AAT']= ['TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','CAT','CAC','GAA','GAG','GGG','GGC','GGA','GGT']
-allnonsyn['AAC']= ['TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','CAT','CAC','GAA','GAG','GGG','GGC','GGA','GGT']
-allnonsyn['AAA']= ['AGG','CGC','CGA','CGT','AGA','CGC','GAA','GAG','CAG','CAA','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG']
-allnonsyn['AAG']= ['AGG','CGC','CGA','CGT','AGA','CGC','GAA','GAG','CAG','CAA','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG']
-allnonsyn['GAT']= ['AAC','AAT','GAA','GAG','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','CAG','CAA']
-allnonsyn['GAC']= ['AAC','AAT','GAA','GAG','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','CAG','CAA']
-allnonsyn['GAA']= ['AAA','AAG','GCT','GCC','GCA','GCG','AAC','AAT','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG']
-allnonsyn['GAG']= ['AAA','AAG','GCT','GCC','GCA','GCG','AAC','AAT','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG']
-allnonsyn['TGT']= ['GCT','GCC','GCA','GCG','ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT','TTT','TTC']
-allnonsyn['TGC']= ['GCT','GCC','GCA','GCG','ATC','ATA','ATT','TTG','TTA','CTC','CTG', 'CTA','CTT','TTT','TTC']
-allnonsyn['TGG']= ['TAT','TAC','TTT','TTC','ACC','ACT','ACA','ACG','CAT','CAC']
-allnonsyn['CGT']= ['AAA','AAG','CAG','CAA','CAT','CAC','GAA','GAG']
-allnonsyn['CGC']= ['AAA','AAG','CAG','CAA','CAT','CAC','GAA','GAG']
-allnonsyn['CGA']= ['AAA','AAG','CAG','CAA','CAT','CAC','GAA','GAG']
-allnonsyn['CGG']= ['AAA','AAG','CAG','CAA','CAT','CAC','GAA','GAG']
-allnonsyn['AGA']= ['AAA','AAG','CAG','CAA','CAT','CAC','GAA','GAG']
-allnonsyn['AGG']= ['AAA','AAG','CAG','CAA','CAT','CAC','GAA','GAG']
-allnonsyn['AGT']= ['ACC','ACT','ACA','ACG', 'GCT','GCC','GCA','GCG','AAC','AAT','GAC','GAT']
-allnonsyn['AGG']= ['ACC','ACT','ACA','ACG', 'GCT','GCC','GCA','GCG','AAC','AAT','GAC','GAT']
-allnonsyn['GGT']= ['GCT','GCC','GCA','GCG','AAC','AAT','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GAC','GAT']
-allnonsyn['GGC']= ['GCT','GCC','GCA','GCG','AAC','AAT','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GAC','GAT']
-allnonsyn['GGA']= ['GCT','GCC','GCA','GCG','AAC','AAT','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GAC','GAT']
-allnonsyn['GGG']= ['GCT','GCC','GCA','GCG','AAC','AAT','TCT','TCA','TCG', 'TCC', 'AGT', 'AGG','GAC','GAT']
-allnonsyn['ATG']= ['TTG','TTA','CTC','CTG', 'CTA','CTT','GTC','GTA','GTG', 'GTT','ATC','ATA','ATT','CAG','CAA']
+allsyn=codons.SynonymousCodons
+allnonsyn=codons.NonSynonymousCodons
 
 minspace=3
 maxspace=7

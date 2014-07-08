@@ -1,74 +1,10 @@
 from Bio import SeqIO
 from Bio.Seq import Seq
 
-"""Functions to remove start/stop codons in alternative frames"""
+import codons
+SynonymousCodons=codons.SynonymousCodons
+allnonsyn=codons.NonSynonymousCodons
 
-SynonymousCodons = { 
-'TGT': ['TGC'],
-'TGC': ['TGT'], 
-'GAC': ['GAT'],
-'GAT': ['GAC'], 
-'TCT': ['TCG', 'TCA', 'TCC', 'AGC', 'AGT'],
-'TCG': ['TCT', 'TCA', 'TCC', 'AGC', 'AGT'],
-'TCA': ['TCT', 'TCG', 'TCC', 'AGC', 'AGT'],
-'TCC': ['TCT', 'TCG', 'TCA', 'AGC', 'AGT'],
-'AGC': ['TCT', 'TCG', 'TCA', 'TCC', 'AGT'],
-'AGT': ['TCT', 'TCG', 'TCA', 'TCC', 'AGC'], 
-'CAA': ['CAG'], 
-'CAG': ['CAA'], 
-'ATG': [], 
-'AAC': ['AAT'],
-'AAT': ['AAC'], 
-'CCT': ['CCG', 'CCA', 'CCC'],
-'CCG': ['CCT', 'CCA', 'CCC'],
-'CCA': ['CCT', 'CCG', 'CCC'],
-'CCC': ['CCT', 'CCG', 'CCA'], 
-'AAG': ['AAA'],
-'AAA': ['AAG'], 
-'TAG': ['TGA', 'TAA'],
-'TGA': ['TAG', 'TAA'],
-'TAA': ['TAG', 'TGA'], 
-'ACC': ['ACA', 'ACG', 'ACT'],
-'ACA': ['ACC', 'ACG', 'ACT'],
-'ACG': ['ACC', 'ACA', 'ACT'],
-'ACT': ['ACC', 'ACA', 'ACG'],
-'TTC': ['TTT'],
-'TTT': ['TTC'], 
-'GCA': ['GCC', 'GCG', 'GCT'],
-'GCC': ['GCA', 'GCG', 'GCT'],
-'GCG': ['GCA', 'GCC', 'GCT'],
-'GCT': ['GCA', 'GCC', 'GCG'],
-'GGT': ['GGC', 'GGG', 'GGA'],
-'GGG': ['GGC', 'GGT', 'GGA'],
-'GGA': ['GGC', 'GGT', 'GGG'],
-'GGC': ['GGT', 'GGG', 'GGA'],
-'ATC': ['ATT', 'ATA'],
-'ATA': ['ATC', 'ATT'],
-'ATT': ['ATC', 'ATA'], 
-'TTA': ['TTG', 'CTC', 'CTT', 'CTG', 'CTA'],
-'TTG': ['TTA', 'CTC', 'CTT', 'CTG', 'CTA'],
-'CTC': ['TTA', 'TTG', 'CTT', 'CTG', 'CTA'],
-'CTT': ['TTA', 'TTG', 'CTC', 'CTG', 'CTA'],
-'CTG': ['TTA', 'TTG', 'CTC', 'CTT', 'CTA'],
-'CTA': ['TTA', 'TTG', 'CTC', 'CTT', 'CTG'], 
-'CAC': ['CAT'],
-'CAT': ['CAC'], 
-'CGA': ['CGT', 'CGC', 'CGG', 'AGA', 'AGG'],
-'CGC': ['CGT', 'CGG', 'CGA', 'AGA', 'AGG'],
-'CGG': ['CGT', 'CGC', 'CGA', 'AGA', 'AGG'],
-'CGT': ['CGC', 'CGG', 'CGA', 'AGA', 'AGG'],
-'AGG': ['CGT', 'CGC', 'CGG', 'CGA', 'AGA'],
-'AGA': ['CGT', 'CGC', 'CGG', 'CGA', 'AGG'],
-'TGG': [], 
-'GTA': ['GTC', 'GTG', 'GTT'],
-'GTC': ['GTA', 'GTG', 'GTT'],
-'GTG': ['GTA', 'GTC', 'GTT'],
-'GTT': ['GTA', 'GTC', 'GTG'],
-'GAG': ['GAA'],
-'GAA': ['GAG'], 
-'TAC': ['TAT'],
-'TAT': ['TAC'] 
-}
 
 def removestopinframepx(s0,x,verbose=True):
     """Take a sequence and remove stop codons in alternative frame with only synonymous changes in main frame"""
