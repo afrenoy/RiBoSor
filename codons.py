@@ -131,7 +131,7 @@ SynonymousCodons = {
         'TAT': ['TAC']
 }
 
-def CodonUsage = {
+CodonUsage = {
         'GGG': 10.99,
         'GGA': 7.92,
         'GGT': 24.85,
@@ -205,9 +205,12 @@ def smartcodonproduct(*args):
     for pool in pools:
         result=[x+[y] for x in result for y in pool]
         position=[i+[j] for i in position for (j,y) in enumerate(pool)]
-    score=[max(x)+sum(x) for x in position]
-    combination=zip(score,result)
+    score1=[max(x)+sum(x) for x in position]
+    score2=[sum([1+(8.-CodonUsage[c])/8. for c in x if (CodonUsage[c]<=8.)]) for x in result]
+    combination=zip(score2,result)
     s=sorted(combination,key=lambda x: x[0])
-    sortedresults=[x[1] for x in s]
-    return sortedresults
+    return s
+    #sortedresults=[x[1] for x in s]
+    #sortedscores=[x[0] for x in s]
+    #return (sortedresults,sortedscores)
 

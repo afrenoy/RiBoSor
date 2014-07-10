@@ -143,7 +143,7 @@ def findRBS(genesequence,save,detaildir):
         assert (len(candidate)==18)
         codonliste=[candidate[k:k+3].tostring() for k in range(0,local,3)] # We transform the list of 18 nucleotides into a list of 6 codons
         allpossible=[allsyn[k]+[k] for k in codonliste]
-        for synonymous_combination in codonsfun.smartcodonproduct(*allpossible): # We look at each possible combination of synonymous changes
+        for (rarity_score,synonymous_combination) in codonsfun.smartcodonproduct(*allpossible): # We look at each possible combination of synonymous changes
             syn_candidate=Seq(reduce(lambda x,y: x+y,synonymous_combination))
             differ=set([i+pos-shift for (i,x) in enumerate(candidate) if syn_candidate[i]!=x])
             rbs_candidate=syn_candidate[shift:]
@@ -153,11 +153,11 @@ def findRBS(genesequence,save,detaildir):
             allconfigs=evaluateRBS(str(rbs_candidate), 1) # We allow RBS+spacer+ATG that have one nucleotide different from the consensus (can be turned into consensus making one non synonymous change)
             for (len_spacer,mod_rbs_candidate,nb_nonsyn,pos_nonsyn) in allconfigs: # nb_nonsyn is 0 or 1, so pos_nonsyn is only one number
                 if not totreat.has_key(mod_rbs_candidate) or totreat[mod_rbs_candidate][1]>nb_nonsyn or ( (totreat[mod_rbs_candidate][1]==nb_nonsyn) and (totreat[mod_rbs_candidate][3]>nbps) ):
-                    totreat[mod_rbs_candidate]=(len_spacer,nb_nonsyn,pos_nonsyn,nbps,differ)
+                    totreat[mod_rbs_candidate]=(len_spacer,nb_nonsyn,pos_nonsyn,nbps,differ,rarity_score)
                     # TODO: maybe index by rbs_candidate and not mod_rbs_candidate
         # Treat the best RBS we found
         if totreat:
-            besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*100 + totreat[x][3]-totreat[y][3])[0]
+            besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*1000 + int((totreat[x][5]-totreat[y][5])*30) + totreat[x][3]-totreat[y][3])[0]
             treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],2,True,save,detaildir)
 
 opts, args = getopt.getopt(sys.argv[1:], "", [])

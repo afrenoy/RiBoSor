@@ -37,7 +37,7 @@ def removestopinframepx(s0,x,verbose=True):
         l1.append(str(c1))
         l2.append(str(c2))
         allcand=dict()
-        for cand1,cand2 in codonsfun.smartcodonproduct(l1,l2):
+        for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2):
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
             new[p1+3:p1+6]=cand2[0:3]
@@ -49,10 +49,10 @@ def removestopinframepx(s0,x,verbose=True):
             if (newpt>pt) or (newpt==-1):
                 candfound=True
                 # Calculate the number of BPS
-                allcand[(cand1,cand2)]=[(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False)
+                allcand[(cand1,cand2)]=([(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False),rarity_score)
         if candfound: # We found at least one candidate
-            # Find the best one (less BPS) among all possible candidates
-            (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u])[0]
+            # Find the best one (less BPS and less rare codons) among all possible candidates
+            (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u][0]+int(allcand[u][1]*10.))[0]
             changedposition=changedposition+[p1+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
@@ -144,7 +144,7 @@ def removestartinframepx(s0,x,verbose=True):
         l1.append(str(c1))
         l2.append(str(c2))
         allcand=dict()
-        for cand1,cand2 in codonsfun.smartcodonproduct(l1,l2):
+        for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2):
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
             new[p1+3:p1+6]=cand2[0:3]
@@ -156,10 +156,10 @@ def removestartinframepx(s0,x,verbose=True):
             if ((newpt>pt) or (newpt==-1)) and (newnstop<=nstop): # We removed one start and did not create one stop
                 candfound=True
                 # Calculate the number of BPS
-                allcand[(cand1,cand2)]=[(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False)
+                allcand[(cand1,cand2)]=([(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False),rarity_score)
         if candfound: # We found at least one candidate
-            # Find the best one (less BPS) among all possible candidates
-            (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u])[0]
+            # Find the best one (less rare codons and less BPS) among all possible candidates
+            (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u][0]+int(allcand[u][1]*10))[0]
             changedposition=changedposition+[p1+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
@@ -249,19 +249,19 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
 
         # Generate all the possible combinations of synonymous codons and the corresponding local sequence 
         allpossible = [SynonymousCodons[k]+[k] for k in codons]
-        allcombination = itertools.imap(lambda combination: reduce(lambda x,y: x+y,combination),codonsfun.smartcodonproduct(*allpossible))
+        allcombination = itertools.imap(lambda combination: (combination[0],reduce(lambda x,y: x+y,combination[1])),codonsfun.smartcodonproduct(*allpossible))
 
         # Only keep the combinations that do not create start/stop in alternative frame
-        allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
+        allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
 
-        # Sort them according to potentiallity for frame shifts
-        bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination+suffixe))
+        # Sort them according to potentiallity for frame shifts and smaller use or rare codons
+        bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination[1]+suffixe)*100+int(combination[0]*10.))
         #could be use as a criteria to refine above metric: when equals in frameshiftability, we could choose the combination that minimizes the number of (synonymous) BPS made.
         #print [x==sequence[firstpos-firstpos%3+i] for (i,x) in enumerate(bestcombination)].count(False)
 
         # Take the best combination and replace appropriate nucleotides in sequence
         l=list(sequence)
-        l[firstpos-firstpos%3:lastpos-lastpos%3+3]=bestcombination
+        l[firstpos-firstpos%3:lastpos-lastpos%3+3]=bestcombination[1]
         sequence=str('').join(l)
 
     # Assert that we only made synonymous changes
