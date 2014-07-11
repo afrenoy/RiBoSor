@@ -91,15 +91,15 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
         posnonsyn=pos+pos_nonsyn
         origcodon=origgenesequence[posnonsyn:posnonsyn+3].translate()
         newcodon=genesequence[posnonsyn:posnonsyn+3].translate()
-        file.write("At position " + str(posnonsyn) + " replaced " + str(origgenesequence[posnonsyn]) + " by " + str(genesequence[posnonsyn]) + " (non synonymous, " + str(origcodon) + " -> " + str(newcodon) +  ") to create a perfect RBS-START\n")
+        file.write("  At position " + str(posnonsyn) + " replaced " + str(origgenesequence[posnonsyn]) + " by " + str(genesequence[posnonsyn]) + " (non synonymous, " + str(origcodon) + " -> " + str(newcodon) +  ") to create a perfect RBS-START\n")
     
     # Output the synonymous changes we made to create this RBS-START
     for i in differ:
-        file.write("At position " + str(i) + " replaced " + str(origgenesequence[i]) + " by " + str(genesequence[i]) + " (synonymous) to create a perfect RBS-START\n")
+        file.write("  At position " + str(i) + " replaced " + str(origgenesequence[i]) + " by " + str(genesequence[i]) + " (synonymous) to create a perfect RBS-START\n")
     
     # Output information about the synonymous changes we made to remove the stop codons
     for p in changedpositionstop:
-        file.write("At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a STOP codon\n")
+        file.write("  At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a STOP codon\n")
     
     # Output information about potential remaining STOP codons we were not able to remove
     for r in remaining_stops:
@@ -107,17 +107,17 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     
     # Output information about the synonymous changes we made to remove the start codons
     for p in changedpositionstart:
-        file.write("At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a START codon\n")
+        file.write("  At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a START codon\n")
     
     # Output information about potential remaining START codons we were not able to remove
     for r in remaining_starts:
         file.write("At position " + str(fr+r) + " unable to remove a START codon\n")
     
     if removefs:
-        # Remove FS hotspots (eveywhere, not only in the overlapping sequence)
+        # Remove FS hotspots (everywhere, not only in the overlapping sequence)
         (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4,pos,pos+len_rbs+len_spacer+3)
         for pn in [i for (i,x) in enumerate(str(modified_genesequence)) if not x==nofs_sequence[i]]:
-            file.write("At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
+            file.write("  At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
 
         # Output information about potential FS hotspots we were not able to remove
         for pn in remaininghotspots:
