@@ -198,6 +198,9 @@ CodonUsage = {
         'CCC': 5.52,
 }
 
+def compute_score2(x):
+    return sum([1+(8.-CodonUsage[c])/8. for c in x if (CodonUsage[c]<=8.)]) 
+
 def smartcodonproduct(*args):
     pools=map(tuple,args)
     result=[[]]
@@ -206,7 +209,7 @@ def smartcodonproduct(*args):
         result=[x+[y] for x in result for y in pool]
         position=[i+[j] for i in position for (j,y) in enumerate(pool)]
     score1=[max(x)+sum(x) for x in position]
-    score2=[sum([1+(8.-CodonUsage[c])/8. for c in x if (CodonUsage[c]<=8.)]) for x in result]
+    score2=[compute_score2(x) for x in result]
     combination=zip(score2,result)
     s=sorted(combination,key=lambda x: x[0])
     return s
