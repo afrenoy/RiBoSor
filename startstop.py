@@ -280,7 +280,7 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
     return(sequence,remaininghotspots)
 
 
-def removerarecodonsinframepx(sequence,frame,verbose=True):
+def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
     '''Try to remove rare codons in alternative frame with the following constraints:
         Do not add starts in alternative frame
         Do not add stops in alternative frame
@@ -297,7 +297,8 @@ def removerarecodonsinframepx(sequence,frame,verbose=True):
     sx=sequence[frame:l0-3+frame]
     initnbstarts=countstart(sx)
     initnbstops=str(Seq(sx).translate()).count('*') 
-    initfs=tunestopfs.frameshiftability(sx)
+    initfs=tunestopfs.frameshiftability(sequence)
+    initfsscore=sum([x for x in initfs if x>=maxlrun])
 
     changedposition=[]
     remaining=[]
@@ -336,7 +337,9 @@ def removerarecodonsinframepx(sequence,frame,verbose=True):
             if str(Seq(newsx).translate()).count('*')>initnbstops:
                 print 'no (stop)'
                 continue
-            if tunestopfs.frameshiftability(newsx)>initfs:
+            newfs=tunestopfs.frameshiftability(newsequence)
+            newfsscore=sum([x for x in newfs if x>=maxlrun])
+            if newfsscore>initfsscore:
                 print 'no (fs)'
                 continue
             if rarity_score>old_rarity_score:
