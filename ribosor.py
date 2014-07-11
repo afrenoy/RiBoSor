@@ -124,6 +124,15 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
             file.write("At position " + str(pn) + " unable to remove a FS hotspot\n")
 
         modified_genesequence = Seq(nofs_sequence)
+    
+    # Remove rare codons in alternative frame
+    (end_genesequence_worare,changedpositionrare,remaining_rare)=startstop.removerarecodonsinframepx(str(modified_genesequence)[fr:],shift,4,False)
+    modified_genesequence=modified_genesequence[:fr]+Seq(end_genesequence_worare)
+    # Output information about changes we made to remove these codons
+    for p in changedpositionrare:
+        file.write("  At position " + str(fr+p) + " replaced " + str(origgenesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a rare codon\n")
+    for r in remaining_rare:
+        file.write("At position " + str(fr+r) + " unable to remove a rare codon\n")
 
     # Compute other information we want about this overlap (number of syn/nonsyn changes, absolute and relative size, ...)
     distAA=[str(modified_genesequence.translate())[i] == x for (i,x) in enumerate(str(origgenesequence.translate()))].count(False)
