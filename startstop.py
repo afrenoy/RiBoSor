@@ -309,11 +309,11 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
     #sumscore=sum[codonsfun.CodonUsage[codons[i]] for i in listrare]
     nbrare=len(listerare)
     while(nbrare>0): #for irare in listerare:
-        print ' '
+        #print ' '
         irare=listerare[0]
         c1=sequence[3*irare:3*irare+3]
         c2=sequence[3*irare+3:3*irare+6]
-        print codons[irare] + ' is rare ' + c1 + ' ' + c2
+        #print codons[irare] + ' is rare ' + c1 + ' ' + c2
         candfound=False
         l1=list(SynonymousCodons[c1])
         l2=list(SynonymousCodons[c2])
@@ -323,39 +323,39 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
         old_usage_framepx=codonsfun.CodonUsage[codons[irare]] # Codon usage of the involved rare codon in alternative frame
         allcand=dict()
         for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2): # Warning: rarity_score is calculated in the frame of GalK.
-            print cand1 + ' ' + cand2 + ' ' + str(irare)
+            #print cand1 + ' ' + cand2 + ' ' + str(irare)
             new=list(sequence)
             new[3*irare:3*irare+3]=cand1[0:3]
             new[3*irare+3:3*irare+6]=cand2[0:3]
             newsequence="".join(new)
             newsx=newsequence[frame:l0-3+frame]
-            print newsequence + ' ' + newsx
+            #print newsequence + ' ' + newsx
             # Check that this candidate does not add start/stop codons or fs hotspots or rare codons in galK frame or rare codon upstream in alternative frame  
             if countstart(newsx)>initnbstarts:
-                print 'no (start)'
+                #print 'no (start)'
                 continue
             if str(Seq(newsx).translate()).count('*')>initnbstops:
-                print 'no (stop)'
+                #print 'no (stop)'
                 continue
             newfs=tunestopfs.frameshiftability(newsequence)
             newfsscore=sum([x for x in newfs if x>=maxlrun])
             if newfsscore>initfsscore:
-                print 'no (fs)'
+                #print 'no (fs)'
                 continue
             if rarity_score>old_rarity_score:
-                print 'no (rare in main frame)'
+                #print 'no (rare in main frame)'
                 continue
             newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
             newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.]
             if len(newlisterare)>0:
                 nextirare=newlisterare[0]
                 if nextirare<irare: # Or should it be < ?
-                    print 'no (rare in alt frame)'
+                    #print 'no (rare in alt frame)'
                     continue
             # This candidate is valid
             candfound=True
             altframecodon=newsx[3*irare:3*irare+3]
-            print 'yes ' + str(codonsfun.CodonUsage[altframecodon])
+            #print 'yes ' + str(codonsfun.CodonUsage[altframecodon])
             # Record the number of BPS and the rarity score in alternative frame
             allcand[(cand1,cand2)]=([(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False),codonsfun.CodonUsage[altframecodon])
 
@@ -382,7 +382,7 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
                 listerare=newlisterare
                 nbrare=len(listerare)
                 changedposition=changedposition+[3*irare+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
-                print sequence + ' is new sequence'
+                #print sequence + ' is new sequence'
                 continue
          
         # No valid candidate found
