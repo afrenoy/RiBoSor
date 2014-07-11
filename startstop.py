@@ -278,3 +278,115 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
     newnbrepeats = tunestopfs.frameshiftability(sequence)
     remaininghotspots = [i+1-maxlrun for (i,x) in enumerate(newnbrepeats) if x==maxlrun]
     return(sequence,remaininghotspots)
+
+
+def removerarecodonsinframepx(sequence,frame,verbose=True):
+    '''Try to remove rare codons in alternative frame with the following constraints:
+        Do not add starts in alternative frame
+        Do not add stops in alternative frame
+        Do not create fs hotspots
+        Do not add rare codons in main frame
+        '''
+    from sys import path
+    path.append('/Users/antoine/code/bioinfo')
+    import tunestopfs
+    assert(type(sequence)==str)
+    assert (frame>0) and (frame<3)
+    protein=Seq(sequence).translate()
+    l0=len(sequence)
+    sx=sequence[frame:l0-3+frame]
+    initnbstarts=countstart(sx)
+    initnbstops=str(Seq(sx).translate()).count('*') 
+    initfs=tunestopfs.frameshiftability(sx)
+
+    changedposition=[]
+    remaining=[]
+
+    #pt=findfirststart(sx)
+    codons=[sx[3*i:3*i+3] for i in range(0,len(sx)/3)]
+    listerare=[i for i in range(0,len(sx)/3) if codonsfun.CodonUsage[codons[i]]<8.]
+    #sumscore=sum[codonsfun.CodonUsage[codons[i]] for i in listrare]
+    nbrare=len(listerare)
+    while(nbrare>0): #for irare in listerare:
+        print ' '
+        irare=listerare[0]
+        c1=sequence[3*irare:3*irare+3]
+        c2=sequence[3*irare+3:3*irare+6]
+        print codons[irare] + ' is rare ' + c1 + ' ' + c2
+        candfound=False
+        l1=list(SynonymousCodons[c1])
+        l2=list(SynonymousCodons[c2])
+        l1.append(str(c1))
+        l2.append(str(c2))
+        old_rarity_score=codonsfun.compute_score2([c1,c2]) # Rarity score of the six bp sequence in main frame
+        old_usage_framepx=codonsfun.CodonUsage[codons[irare]] # Codon usage of the involved rare codon in alternative frame
+        allcand=dict()
+        for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2): # Warning: rarity_score is calculated in the frame of GalK.
+            print cand1 + ' ' + cand2 + ' ' + str(irare)
+            new=list(sequence)
+            new[3*irare:3*irare+3]=cand1[0:3]
+            new[3*irare+3:3*irare+6]=cand2[0:3]
+            newsequence="".join(new)
+            newsx=newsequence[frame:l0-3+frame]
+            print newsequence + ' ' + newsx
+            # Check that this candidate does not add start/stop codons or fs hotspots or rare codons in galK frame or rare codon upstream in alternative frame  
+            if countstart(newsx)>initnbstarts:
+                print 'no (start)'
+                continue
+            if str(Seq(newsx).translate()).count('*')>initnbstops:
+                print 'no (stop)'
+                continue
+            if tunestopfs.frameshiftability(newsx)>initfs:
+                print 'no (fs)'
+                continue
+            if rarity_score>old_rarity_score:
+                print 'no (rare in main frame)'
+                continue
+            newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
+            newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.]
+            if len(newlisterare)>0:
+                nextirare=newlisterare[0]
+                if nextirare<irare: # Or should it be < ?
+                    print 'no (rare in alt frame)'
+                    continue
+            # This candidate is valid
+            candfound=True
+            altframecodon=newsx[3*irare:3*irare+3]
+            print 'yes ' + str(codonsfun.CodonUsage[altframecodon])
+            # Record the number of BPS and the rarity score in alternative frame
+            allcand[(cand1,cand2)]=([(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False),codonsfun.CodonUsage[altframecodon])
+
+        if candfound: # We found at least one candidate
+            # Find the best one (less BPS and less rare codons) among all possible candidates
+            sortedcandidates=sorted(allcand,key=lambda u: allcand[u][0]-int(allcand[u][1]*10.))
+            (cand1,cand2)=sortedcandidates[0]
+            new_usage_framepx=allcand[sortedcandidates[0]][1]
+            new=list(sequence)
+            new[3*irare:3*irare+3]=cand1[0:3]
+            new[3*irare+3:3*irare+6]=cand2[0:3]
+            newsequence="".join(new)
+            newsx=newsequence[frame:l0-3+frame]
+            assert(len(sequence)==len(newsequence))
+            assert (str(Seq(sequence).translate())==str(Seq(newsequence).translate()))
+
+            newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
+            newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.]
+
+            # Is this candidate better than original sequence ?
+            if new_usage_framepx > old_usage_framepx:
+                sequence=newsequence
+                codons=newcodons
+                listerare=newlisterare
+                nbrare=len(listerare)
+                changedposition=changedposition+[3*irare+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
+                print sequence + ' is new sequence'
+                continue
+         
+        # No valid candidate found
+        remaining=remaining+[irare]
+        listerare.remove(irare)
+        nbrare=len(listerare)
+        if verbose:
+           print "unable to remove rare codon " + codons[irare] + " at position " + str(3*irare+frame)
+    return (sequence,changedposition,remaining)
+ 
