@@ -347,11 +347,10 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
                 continue
             newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
             newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.]
-            if len(newlisterare)>0:
-                nextirare=newlisterare[0]
-                if nextirare<irare: # Or should it be < ?
-                    #print 'no (rare in alt frame)'
-                    continue
+            diff=set(newlisterare)-set(remaining)
+            if len(diff)>0 and min(diff)<irare: #  Are we adding rare codons in candidate before the one we are trying to remove?
+                #print 'no (rare in alt frame)'
+                continue
             # This candidate is valid
             candfound=True
             altframecodon=newsx[3*irare:3*irare+3]
@@ -373,13 +372,14 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
             assert (str(Seq(sequence).translate())==str(Seq(newsequence).translate()))
 
             newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
-            newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.]
+            newlisterare=set([i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.])-set(remaining)
 
             # Is this candidate better than original sequence ?
             if new_usage_framepx > old_usage_framepx:
                 sequence=newsequence
                 codons=newcodons
-                listerare=newlisterare
+                #listerare.remove(irare)
+                listerare=sorted(list(newlisterare))
                 nbrare=len(listerare)
                 changedposition=changedposition+[3*irare+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
                 #print sequence + ' is new sequence'
@@ -391,5 +391,5 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
         nbrare=len(listerare)
         if verbose:
            print "unable to remove rare codon " + codons[irare] + " at position " + str(3*irare+frame)
-    return (sequence,changedposition,remaining)
+    return (sequence,changedposition,[3*x+frame for x in remaining])
  
