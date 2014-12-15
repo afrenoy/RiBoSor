@@ -80,32 +80,39 @@ def removestopinframepx(s0,x,verbose=True):
     return (s0,changedposition,[i*3+x for (i,A) in enumerate(tx) if A=='*'])
 
 def codonfold(sx):
+   """Transform a string into a list of codons"""
    assert (len(sx)%3==0)
-   if len(sx)==0:
-       return []
-   if len(sx)==3:
-      return [sx]
-   return [sx[0:3]]+codonfold(sx[3:])
+   return [sx[i:i+3] for i in range(0,len(sx),3)]
 
 def isstart(codon):
    return codon=='ATG' or codon=='GTG' or codon=='TTG'
 
-def firststart(sfx,off=0):
-   if len(sfx)==0:
-      return -1
-   elif isstart(sfx[0]):
-      return off
-   else:
-      return firststart(sfx[1:],off+1)
-
-def findfirststart(sx, m=0):
+def findfirststart(sx,m=0):
    sfx=codonfold(sx)
    assert(len(sfx)>=m)
-   cand=firststart(sfx[m:])
-   if cand>-1:
-      return cand+m
-   else:
-      return -1
+   i=m
+   while(i<len(sfx)):
+      if isstart(sfx[i]):
+         return i
+      i=i+1
+   return -1
+
+#def firststart(sfx,off=0):
+#   if len(sfx)==0:
+#      return -1
+#   elif isstart(sfx[0]):
+#      return off
+#   else:
+#      return firststart(sfx[1:],off+1)
+
+#def findfirststart(sx, m=0):
+#   sfx=codonfold(sx)
+#   assert(len(sfx)>=m)
+#   cand=firststart(sfx[m:])
+#   if cand>-1:
+#      return cand+m
+#   else:
+#      return -1
 
 def countstart(sx):
     sfx=codonfold(sx)
