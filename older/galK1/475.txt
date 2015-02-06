@@ -1,0 +1,35 @@
+At position 489 replaced C by G (non synonymous, Q -> E) to create a perfect RBS-START
+At position 488 replaced C by T (synonymous) to create a perfect RBS-START
+At position 479 replaced A by G (synonymous) to create a perfect RBS-START
+At position 497 replaced A by C (synonymous) to eliminate a STOP codon
+At position 527 replaced A by T (synonymous) to eliminate a STOP codon
+At position 563 replaced G by C (synonymous) to eliminate a STOP codon
+At position 806 replaced G by C (synonymous) to eliminate a STOP codon
+At position 860 replaced G by C (synonymous) to eliminate a STOP codon
+At position 876 replaced T by C (synonymous) to eliminate a STOP codon
+At position 878 replaced G by T (synonymous) to eliminate a STOP codon
+At position 947 replaced A by G (synonymous) to eliminate a STOP codon
+At position 965 replaced G by C (synonymous) to eliminate a STOP codon
+At position 1028 replaced G by C (synonymous) to eliminate a STOP codon
+At position 991 unable to remove a STOP codon
+At position 494 replaced T by C (synonymous) to eliminate a START codon
+At position 497 replaced A by C (synonymous) to eliminate a START codon
+At position 554 replaced T by C (synonymous) to eliminate a START codon
+At position 611 replaced T by G (synonymous) to eliminate a START codon
+At position 656 replaced T by C (synonymous) to eliminate a START codon
+At position 680 replaced T by G (synonymous) to eliminate a START codon
+At position 698 replaced T by G (synonymous) to eliminate a START codon
+At position 728 replaced T by G (synonymous) to eliminate a START codon
+At position 731 replaced T by C (synonymous) to eliminate a START codon
+At position 740 replaced T by C (synonymous) to eliminate a START codon
+At position 758 replaced T by G (synonymous) to eliminate a START codon
+At position 764 replaced T by C (synonymous) to eliminate a START codon
+At position 827 replaced T by G (synonymous) to eliminate a START codon
+At position 893 replaced T by C (synonymous) to eliminate a START codon
+At position 908 replaced T by C (synonymous) to eliminate a START codon
+At position 935 replaced T by C (synonymous) to eliminate a START codon
+At position 947 replaced A by G (synonymous) to eliminate a START codon
+At position 968 replaced T by C (synonymous) to eliminate a START codon
+At position 980 replaced T by G (synonymous) to eliminate a START codon
+At position 1007 replaced T by C (synonymous) to eliminate a START codon
+At position 1079 replaced T by C (synonymous) to eliminate a START codon

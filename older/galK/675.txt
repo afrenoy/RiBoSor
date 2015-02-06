@@ -1,0 +1,106 @@
+  At position 680 replaced T by G (synonymous) to create a perfect RBS-START
+  At position 675 replaced C by A (synonymous) to create a perfect RBS-START
+  At position 677 replaced T by G (synonymous) to create a perfect RBS-START
+  At position 678 replaced C by A (synonymous) to create a perfect RBS-START
+  At position 686 replaced G by A (synonymous) to create a perfect RBS-START
+  At position 728 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 740 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 764 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 809 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 827 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 908 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 935 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 1070 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 1079 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 1097 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 1118 replaced T by C (synonymous) to eliminate a STOP codon
+  At position 164 replaced T by C (synonymous) to eliminate a START codon
+  At position 167 replaced T by C (synonymous) to eliminate a START codon
+  At position 569 replaced T by C (synonymous) to eliminate a START codon
+  At position 1115 replaced T by C (synonymous) to eliminate a START codon
+At position 272 unable to remove a START codon
+At position 1142 unable to remove a START codon
+  At position 14 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 17 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 20 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 215 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 233 replaced T by C (synonymous) to eliminate a FS hotspot
+  At position 236 replaced C by T (synonymous) to eliminate a FS hotspot
+  At position 263 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 485 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 488 replaced C by T (synonymous) to eliminate a FS hotspot
+  At position 581 replaced G by C (synonymous) to eliminate a FS hotspot
+  At position 584 replaced G by C (synonymous) to eliminate a FS hotspot
+  At position 785 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 788 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 812 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 815 replaced C by T (synonymous) to eliminate a FS hotspot
+  At position 1085 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 1088 replaced A by G (synonymous) to eliminate a FS hotspot
+  At position 1091 replaced A by T (synonymous) to eliminate a FS hotspot
+  At position 1106 replaced T by G (synonymous) to eliminate a FS hotspot
+  At position 1109 replaced T by C (synonymous) to eliminate a FS hotspot
+  At position 1112 replaced C by T (synonymous) to eliminate a FS hotspot
+  At position 695 replaced C by T (synonymous) to eliminate a rare codon
+  At position 698 replaced T by C (synonymous) to eliminate a rare codon
+  At position 722 replaced C by A (synonymous) to eliminate a rare codon
+  At position 723 replaced C by T (synonymous) to eliminate a rare codon
+  At position 731 replaced T by C (synonymous) to eliminate a rare codon
+  At position 743 replaced A by G (synonymous) to eliminate a rare codon
+  At position 755 replaced T by G (synonymous) to eliminate a rare codon
+  At position 758 replaced T by G (synonymous) to eliminate a rare codon
+  At position 773 replaced C by T (synonymous) to eliminate a rare codon
+  At position 797 replaced T by C (synonymous) to eliminate a rare codon
+  At position 809 replaced T by G (synonymous) to eliminate a rare codon
+  At position 815 replaced C by C (synonymous) to eliminate a rare codon
+  At position 827 replaced T by G (synonymous) to eliminate a rare codon
+  At position 833 replaced T by G (synonymous) to eliminate a rare codon
+  At position 851 replaced A by G (synonymous) to eliminate a rare codon
+  At position 857 replaced C by T (synonymous) to eliminate a rare codon
+  At position 858 replaced C by T (synonymous) to eliminate a rare codon
+  At position 890 replaced T by G (synonymous) to eliminate a rare codon
+  At position 893 replaced T by C (synonymous) to eliminate a rare codon
+  At position 947 replaced A by G (synonymous) to eliminate a rare codon
+  At position 962 replaced T by G (synonymous) to eliminate a rare codon
+  At position 977 replaced A by G (synonymous) to eliminate a rare codon
+  At position 995 replaced C by T (synonymous) to eliminate a rare codon
+  At position 998 replaced C by T (synonymous) to eliminate a rare codon
+  At position 1001 replaced C by T (synonymous) to eliminate a rare codon
+  At position 1010 replaced C by T (synonymous) to eliminate a rare codon
+  At position 1031 replaced C by T (synonymous) to eliminate a rare codon
+  At position 1037 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1049 replaced T by G (synonymous) to eliminate a rare codon
+  At position 1055 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1064 replaced T by G (synonymous) to eliminate a rare codon
+  At position 1070 replaced T by G (synonymous) to eliminate a rare codon
+  At position 1073 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1076 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1100 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1112 replaced C by C (synonymous) to eliminate a rare codon
+  At position 1127 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1130 replaced A by G (synonymous) to eliminate a rare codon
+  At position 1136 replaced A by T (synonymous) to eliminate a rare codon
+  At position 1139 replaced A by G (synonymous) to eliminate a rare codon
+At position 728 unable to remove a rare codon
+At position 740 unable to remove a rare codon
+At position 743 unable to remove a rare codon
+At position 764 unable to remove a rare codon
+At position 770 unable to remove a rare codon
+At position 809 unable to remove a rare codon
+At position 827 unable to remove a rare codon
+At position 845 unable to remove a rare codon
+At position 854 unable to remove a rare codon
+At position 872 unable to remove a rare codon
+At position 884 unable to remove a rare codon
+At position 905 unable to remove a rare codon
+At position 908 unable to remove a rare codon
+At position 914 unable to remove a rare codon
+At position 935 unable to remove a rare codon
+At position 947 unable to remove a rare codon
+At position 971 unable to remove a rare codon
+At position 1034 unable to remove a rare codon
+At position 1037 unable to remove a rare codon
+At position 1070 unable to remove a rare codon
+At position 1079 unable to remove a rare codon
+At position 1100 unable to remove a rare codon
+At position 1109 unable to remove a rare codon

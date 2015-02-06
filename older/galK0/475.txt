@@ -1,0 +1,14 @@
+At position 489 replaced C by G (non synonymous, Q -> E) to create a perfect RBS-START
+At position 488 replaced C by T (synonymous) to create a perfect RBS-START
+At position 479 replaced A by G (synonymous) to create a perfect RBS-START
+At position 497 replaced A by T (synonymous) to eliminate a STOP codon
+At position 527 replaced A by T (synonymous) to eliminate a STOP codon
+At position 563 replaced G by C (synonymous) to eliminate a STOP codon
+At position 806 replaced G by C (synonymous) to eliminate a STOP codon
+At position 860 replaced G by C (synonymous) to eliminate a STOP codon
+At position 876 replaced T by C (synonymous) to eliminate a STOP codon
+At position 878 replaced G by T (synonymous) to eliminate a STOP codon
+At position 947 replaced A by T (synonymous) to eliminate a STOP codon
+At position 965 replaced G by C (synonymous) to eliminate a STOP codon
+At position 1028 replaced G by C (synonymous) to eliminate a STOP codon
+At position 499 unable to remove a STOP codon
