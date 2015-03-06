@@ -217,3 +217,14 @@ def smartcodonproduct(*args):
     #sortedscores=[x[0] for x in s]
     #return (sortedresults,sortedscores)
 
+
+mfsc=dict() # Most Frequent Synonymous Codon
+for codon in CodonUsage:
+    if len(SynonymousCodons[codon])==0:
+        mfsc[codon]=codon
+        continue
+    candidate=max(SynonymousCodons[codon],key=lambda sc: CodonUsage[sc])
+    if CodonUsage[candidate]<8.0 and CodonUsage[codon]>CodonUsage[candidate]:
+        mfsc[codon]=codon
+    else:
+        mfsc[codon]=candidate
