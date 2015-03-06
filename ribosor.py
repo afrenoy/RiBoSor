@@ -133,7 +133,7 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
         modified_genesequence = Seq(nofs_sequence)
     
     # Remove rare codons in alternative frame
-    (end_genesequence_worare,changedpositionrare,remaining_rare)=startstop.removerarecodonsinframepx(str(modified_genesequence)[fr:],shift,4,False)
+    (end_genesequence_worare,changedpositionrare,remaining_rare)=startstop.removerarecodonsinframepx(str(modified_genesequence)[fr:],shift,4,8.0,False)
     modified_genesequence=modified_genesequence[:fr]+Seq(end_genesequence_worare)
     # Output information about changes we made to remove these codons
     for p in changedpositionrare:

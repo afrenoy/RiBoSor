@@ -294,7 +294,7 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
     return(sequence,remaininghotspots)
 
 
-def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
+def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=True):
     '''Try to remove rare codons in alternative frame with the following constraints:
         Do not add starts in alternative frame
         Do not add stops in alternative frame
@@ -319,7 +319,7 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
 
     #pt=findfirststart(sx)
     codons=[sx[3*i:3*i+3] for i in range(0,len(sx)/3)]
-    listerare=[i for i in range(0,len(sx)/3) if codonsfun.CodonUsage[codons[i]]<8.]
+    listerare=[i for i in range(0,len(sx)/3) if codonsfun.CodonUsage[codons[i]]<rarethreshold]
     #sumscore=sum[codonsfun.CodonUsage[codons[i]] for i in listrare]
     nbrare=len(listerare)
     while(nbrare>0): #for irare in listerare:
@@ -360,7 +360,7 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
                 #print 'no (rare in main frame)'
                 continue
             newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
-            newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.]
+            newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<rarethreshold]
             diff=set(newlisterare)-set(remaining)
             if len(diff)>0 and min(diff)<irare: #  Are we adding rare codons in candidate before the one we are trying to remove?
                 #print 'no (rare in alt frame)'
@@ -386,7 +386,7 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,verbose=True):
             assert (str(Seq(sequence).translate())==str(Seq(newsequence).translate()))
 
             newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
-            newlisterare=set([i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<8.])-set(remaining)
+            newlisterare=set([i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<rarethreshold])-set(remaining)
 
             # Is this candidate better than original sequence ?
             if new_usage_framepx > old_usage_framepx:
