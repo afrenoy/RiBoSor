@@ -5,6 +5,13 @@ import codons as codonsfun
 SynonymousCodons=codonsfun.SynonymousCodons
 allnonsyn=codonsfun.NonSynonymousCodons
 
+def optimize(s0):
+    newseq=list(s0)
+    for i in range(0,len(s0),3):
+        newcodon=codonsfun.mfsc[s0[i:i+3]]
+        newseq[i:i+3]=newcodon
+    s1=''.join(newseq)
+    return s1
 
 def removestopinframepx(s0,x,verbose=True):
     """Take a sequence and remove stop codons in alternative frame with only synonymous changes in main frame"""

@@ -64,7 +64,14 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     fr=posfirstcds-shift+3 # The position in the upstream gene where we will start considering making synonymous change to eliminate STOP codons in our downstream new frame
     # We do not start at posfirtscds-shift otherwise we would risk to modify the RBS we just created.
     assert len(genesequence[fr:])%3 == 0
-    
+
+    # Make synonymous changes in galK sequence to try to get read of this fucking cryptic promoter
+    if fr>25:
+        optimized_beg_galK=startstop.optimize(str(genesequence[:fr-24]))
+        genesequence=Seq(optimized_beg_galK)+genesequence[fr-24:]
+    optimized_end_galK=startstop.optimize(str(genesequence[fr+6:]))
+    genesequence=genesequence[:fr+6]+Seq(optimized_end_galK)
+
     # Remove the stop codons that could exist in our new frame (aph, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
     (end_genesequence_wostop,changedpositionstop,remaining_stops)=startstop.removestopinframepx(genesequence[fr:],shift,False)
 
