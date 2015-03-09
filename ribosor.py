@@ -111,7 +111,8 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     # Output information about the synonymous changes we made to remove the stop codons
     rbsfile.write('-- Remove stop codons in new frame\n')
     for p in changedpositionstop:
-        rbsfile.write("  At position " + str(fr+p) + " replaced " + str(optimized_genesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a STOP codon\n")
+        if str(optimized_genesequence[fr+p])!=str(modified_genesequence[fr+p]): # It is possible that one change is reverted by the next one if changing two close positions, in which case we do not need to report
+            rbsfile.write("  At position " + str(fr+p) + " replaced " + str(optimized_genesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a STOP codon\n")
     
     # Output information about potential remaining STOP codons we were not able to remove
     for r in remaining_stops:
@@ -120,7 +121,8 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     # Output information about the synonymous changes we made to remove the start codons
     rbsfile.write('-- Remove start codons in new frame\n')
     for p in changedpositionstart:
-        rbsfile.write("  At position " + str(fr+p) + " replaced " + str(optimized_genesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a START codon\n")
+        if str(optimized_genesequence[fr+p])!=str(modified_genesequence[fr+p]):
+            rbsfile.write("  At position " + str(fr+p) + " replaced " + str(optimized_genesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a START codon\n")
     
     # Output information about potential remaining START codons we were not able to remove
     for r in remaining_starts:
@@ -131,7 +133,8 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
         # Remove FS hotspots (everywhere, not only in the overlapping sequence)
         (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence),shift,4,pos,pos+len_rbs+len_spacer+3)
         for pn in [i for (i,x) in enumerate(str(modified_genesequence)) if not x==nofs_sequence[i]]:
-            rbsfile.write("  At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
+            if str(nofs_sequence[pn])!=str(modified_genesequence[pn]):
+                rbsfile.write("  At position " + str(pn) + " replaced " + str(modified_genesequence[pn]) + " by " + str(nofs_sequence[pn]) + " (synonymous) to eliminate a FS hotspot\n")
 
         # Output information about potential FS hotspots we were not able to remove
         for pn in remaininghotspots:
@@ -145,7 +148,8 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     # Output information about changes we made to remove these codons
     rbsfile.write('-- Remove rare codons\n')
     for p in changedpositionrare:
-        rbsfile.write("  At position " + str(fr+p) + " replaced " + str(optimized_genesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a rare codon\n")
+        if str(optimized_genesequence[fr+p])!=str(modified_genesequence[fr+p]):
+            rbsfile.write("  At position " + str(fr+p) + " replaced " + str(optimized_genesequence[fr+p]) + " by " + str(modified_genesequence[fr+p]) + " (synonymous) to eliminate a rare codon\n")
     for r in remaining_rare:
         rbsfile.write("At position " + str(fr+r) + " unable to remove a rare codon\n")
 
