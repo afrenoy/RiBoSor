@@ -202,7 +202,7 @@ def compute_score2(x):
     return sum([1+(8.-CodonUsage[c])/8. for c in x if (CodonUsage[c]<=8.)]) 
 
 def smartcodonproduct(*args):
-    pools=map(tuple,args)
+    pools=list(map(tuple,args))
     result=[[]]
     position=[[]]
     for pool in pools:
@@ -210,7 +210,7 @@ def smartcodonproduct(*args):
         position=[i+[j] for i in position for (j,y) in enumerate(pool)]
     score1=[max(x)+sum(x) for x in position]
     score2=[compute_score2(x) for x in result]
-    combination=zip(score2,result)
+    combination=list(zip(score2,result))
     s=sorted(combination,key=lambda x: x[0])
     return s
     #sortedresults=[x[1] for x in s]

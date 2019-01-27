@@ -2,6 +2,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 
 import codons as codonsfun
+from functools import reduce
 SynonymousCodons=codonsfun.SynonymousCodons
 allnonsyn=codonsfun.NonSynonymousCodons
 
@@ -70,7 +71,7 @@ def removestopinframepx(s0,x,verbose=True):
             newpt=newtx.find('*',pt)
             assert(len(s0)==len(news0))
             if verbose:
-                print "We removed stop codon at position " + str(pt*3+x) + ". "
+                print("We removed stop codon at position " + str(pt*3+x) + ". ")
             s0=news0
             sx=newsx
             tx=newtx
@@ -78,7 +79,7 @@ def removestopinframepx(s0,x,verbose=True):
         else:
             bummer=True
             if verbose:
-                print "Bummer ! We are unable to remove stop codon at position " + str(pt*3+x) + ". Let's skip this one and go on."
+                print("Bummer ! We are unable to remove stop codon at position " + str(pt*3+x) + ". Let's skip this one and go on.")
             pt=tx.find('*',pt+1)
             continue
     # We have removed all stop codons in frame x
@@ -186,14 +187,14 @@ def removestartinframepx(s0,x,verbose=True):
                 nstop=newnstop
             assert(len(s0)==len(news0))
             if verbose:
-                print "We removed start codon at position " + str(pt*3+x) + ". "
+                print("We removed start codon at position " + str(pt*3+x) + ". ")
             s0=news0
             sx=newsx
             pt=newpt
         else:
             bummer=True
             if verbose:
-                print "Bummer ! We are unable to remove start codon at position " + str(pt*3+x) + ". Let's skip this one and go on."
+                print("Bummer ! We are unable to remove start codon at position " + str(pt*3+x) + ". Let's skip this one and go on.")
             pt=findfirststart(sx,pt+1)
             continue
     # We have removed all start codons in frame x
@@ -263,10 +264,10 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
 
         # Generate all the possible combinations of synonymous codons and the corresponding local sequence 
         allpossible = [SynonymousCodons[k]+[k] for k in codons]
-        allcombination = itertools.imap(lambda combination: (combination[0],reduce(lambda x,y: x+y,combination[1])),codonsfun.smartcodonproduct(*allpossible))
+        allcombination = map(lambda combination: (combination[0],reduce(lambda x,y: x+y,combination[1])),codonsfun.smartcodonproduct(*allpossible))
 
         # Only keep the combinations that do not create start/stop in alternative frame
-        allowedcombination = itertools.ifilter(lambda combination: countstart((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
+        allowedcombination = filter(lambda combination: countstart((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
 
         # Sort them according to potentiallity for frame shifts and smaller use or rare codons
         bestcombination = min(allowedcombination, key = lambda combination: tunestopfs.frameshiftability_score(prefixe+combination[1]+suffixe)*100+int(combination[0]*10.))
@@ -302,7 +303,6 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=Tr
         Do not add rare codons in main frame
         '''
     from sys import path
-    path.append('/Users/antoine/code/bioinfo')
     import tunestopfs
     assert(type(sequence)==str)
     assert (frame>0) and (frame<3)
@@ -318,8 +318,8 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=Tr
     remaining=[]
 
     #pt=findfirststart(sx)
-    codons=[sx[3*i:3*i+3] for i in range(0,len(sx)/3)]
-    listerare=[i for i in range(0,len(sx)/3) if codonsfun.CodonUsage[codons[i]]<rarethreshold]
+    codons=[sx[3*i:3*i+3] for i in range(0,int(len(sx)/3))]
+    listerare=[i for i in range(0,int(len(sx)/3)) if codonsfun.CodonUsage[codons[i]]<rarethreshold]
     #sumscore=sum[codonsfun.CodonUsage[codons[i]] for i in listrare]
     nbrare=len(listerare)
     while(nbrare>0): #for irare in listerare:
@@ -359,8 +359,8 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=Tr
             if rarity_score>old_rarity_score:
                 #print 'no (rare in main frame)'
                 continue
-            newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
-            newlisterare=[i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<rarethreshold]
+            newcodons=[newsx[3*i:3*i+3] for i in range(0,int(len(newsx)/3))]
+            newlisterare=[i for i in range(0,int(len(newsx)/3)) if codonsfun.CodonUsage[newcodons[i]]<rarethreshold]
             diff=set(newlisterare)-set(remaining)
             if len(diff)>0 and min(diff)<irare: #  Are we adding rare codons in candidate before the one we are trying to remove?
                 #print 'no (rare in alt frame)'
@@ -385,8 +385,8 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=Tr
             assert(len(sequence)==len(newsequence))
             assert (str(Seq(sequence).translate())==str(Seq(newsequence).translate()))
 
-            newcodons=[newsx[3*i:3*i+3] for i in range(0,len(newsx)/3)]
-            newlisterare=set([i for i in range(0,len(newsx)/3) if codonsfun.CodonUsage[newcodons[i]]<rarethreshold])-set(remaining)
+            newcodons=[newsx[3*i:3*i+3] for i in range(0,int(len(newsx)/3))]
+            newlisterare=set([i for i in range(0,int(len(newsx)/3)) if codonsfun.CodonUsage[newcodons[i]]<rarethreshold])-set(remaining)
 
             # Is this candidate better than original sequence ?
             if new_usage_framepx > old_usage_framepx:
@@ -404,6 +404,6 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=Tr
         listerare.remove(irare)
         nbrare=len(listerare)
         if verbose:
-           print "unable to remove rare codon " + codons[irare] + " at position " + str(3*irare+frame)
+           print("unable to remove rare codon " + codons[irare] + " at position " + str(3*irare+frame))
     return (sequence,changedposition,[3*x+frame for x in remaining])
  

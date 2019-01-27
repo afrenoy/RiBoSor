@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding:UTF-8 -*-
 
 from Bio import SeqIO
@@ -12,6 +12,7 @@ import getopt
 import sys
 import startstop
 import codons as codonsfun
+from functools import reduce
 
 allsyn=codonsfun.SynonymousCodons
 allnonsyn=codonsfun.NonSynonymousCodons
@@ -48,7 +49,7 @@ def evaluateRBS(sequence,maxdist):
         else:
             relativefirstpostochange[len_spacer]=-1
             newsequence[len_spacer]=list(sequence[:len_rbs+len_spacer+3])
-    return [(len_spacer,"".join(newsequence[len_spacer]),disttable[len_spacer],relativefirstpostochange[len_spacer]) for len_spacer in disttable.keys() if disttable[len_spacer]<=maxdist]
+    return [(len_spacer,"".join(newsequence[len_spacer]),disttable[len_spacer],relativefirstpostochange[len_spacer]) for len_spacer in list(disttable.keys()) if disttable[len_spacer]<=maxdist]
 
 
 def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,differ,removestart,removefs,save,detaildir): # TODO: modify so it reports every change.
@@ -160,9 +161,13 @@ def treatRBS(origgenesequence,pos,rbssequence,len_spacer,nb_nonsyn,pos_nonsyn,di
     distBP=[modified_genesequence[i] == x for (i,x) in enumerate(origgenesequence)].count(False)
     sizeoverlap=(len(genesequence)-(pos+len_rbs+len_spacer))
     proportion=float(sizeoverlap)/len(genesequence)
-    save.writerow([pos,sizeoverlap,proportion,shift,len_spacer,distBP,distAA,len(remaining_stops),'Antoine',str(modified_genesequence)])
+    #save.write(','.join([pos,sizeoverlap,proportion,shift,len_spacer,distBP,distAA,len(remaining_stops),'ff266af',str(modified_genesequence)])+'\n')
+    print('%d,%d,%.3f,%d,%d,%d,%d,%d,%s,%s\n'%(pos,sizeoverlap,proportion,shift,len_spacer,distBP,distAA,len(remaining_stops),'ff266af',str(modified_genesequence)), file=save)
     rbsfile.close()
-    
+    print(pos)
+    print(modified_genesequence[pos:pos+len_rbs+len_spacer+3])
+    print(modified_genesequence[:pos]+' '+origgenesequence[pos:pos+len_rbs+len_spacer+3]+' '+modified_genesequence[pos+len_rbs+len_spacer+3:])
+
 def findRBS(genesequence,save,detaildir):
     l=len(genesequence)
     local=18 # RBS (6) + spacer (<=7) + ATG (3) arrondi au codon près
@@ -182,12 +187,12 @@ def findRBS(genesequence,save,detaildir):
             # We calculate the score of this candidate. We have to be carreful that it can happens it is a good candidate for several different RBS configurations (different spacer sizes), so we want to find all the possible configurations
             allconfigs=evaluateRBS(str(rbs_candidate), 1) # We allow RBS+spacer+ATG that have one nucleotide different from the consensus (can be turned into consensus making one non synonymous change)
             for (len_spacer,mod_rbs_candidate,nb_nonsyn,pos_nonsyn) in allconfigs: # nb_nonsyn is 0 or 1, so pos_nonsyn is only one number
-                if not totreat.has_key(mod_rbs_candidate) or totreat[mod_rbs_candidate][1]>nb_nonsyn or ( (totreat[mod_rbs_candidate][1]==nb_nonsyn) and (totreat[mod_rbs_candidate][3]>nbps) ):
+                if mod_rbs_candidate not in totreat or totreat[mod_rbs_candidate][1]>nb_nonsyn or ( (totreat[mod_rbs_candidate][1]==nb_nonsyn) and (totreat[mod_rbs_candidate][3]>nbps) ):
                     totreat[mod_rbs_candidate]=(len_spacer,nb_nonsyn,pos_nonsyn,nbps,differ,rarity_score)
                     # TODO: maybe index by rbs_candidate and not mod_rbs_candidate
         # Treat the best RBS we found
         if totreat:
-            besttotreat=sorted(totreat, cmp=lambda x,y: (totreat[x][1]-totreat[y][1])*1000 + int((totreat[x][5]-totreat[y][5])*30) + totreat[x][3]-totreat[y][3])[0]
+            besttotreat=sorted(totreat, key=lambda x: totreat[x][1]*1000 + int(totreat[x][5]*30) + totreat[x][3])[0]
             treatRBS(genesequence,pos,besttotreat,totreat[besttotreat][0],totreat[besttotreat][1],totreat[besttotreat][2],totreat[besttotreat][4],2,True,save,detaildir)
 
 opts, args = getopt.getopt(sys.argv[1:], "", [])
@@ -196,8 +201,9 @@ inputfilename=name+".fasta"
 outputfilename=name+".csv"
 detaildir=name
 
-save = csv.writer(open(outputfilename, "wb"))
-save.writerow(['Start position','Length of the Overlap','% protected','Frame','Spacer','Number of base pair changed','Number of amino acid changed','Number of remaining STOPS','Algorithm','New sequence'])
+#save = csv.writer(open(outputfilename, "wb"))
+save = open(outputfilename, "x")
+save.write(','.join(['Start position','Length of the Overlap','% protected','Frame','Spacer','Number of base pair changed','Number of amino acid changed','Number of remaining STOPS','Algorithm','New sequence'])+'\n')
 
 fasta_record = SeqIO.read(open(inputfilename,"r"),"fasta")
 bioseq=fasta_record.seq
