@@ -185,9 +185,8 @@ def findRBS(genesequence, save, detaildir):
         assert (len(candidate) == 18)
         # We transform the list of 18 nucleotides into a list of 6 codons
         codonliste = [str(candidate[k:k+3]) for k in range(0, local, 3)]
-        allpossible = [allsyn[k]+[k] for k in codonliste]
         # We look at each possible combination of synonymous changes
-        for (rarity_score, synonymous_combination) in codonsfun.smartcodonproduct(*allpossible):
+        for (synonymous_combination, rarity_score) in codonsfun.generate_synonymous_combinations(codonliste):
             syn_candidate = Seq(reduce(lambda x, y: x+y, synonymous_combination))
             differ = set([i+pos-shift for (i, x) in enumerate(candidate) if syn_candidate[i] != x])
             rbs_candidate = syn_candidate[shift:]

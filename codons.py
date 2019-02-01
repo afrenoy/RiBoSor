@@ -198,24 +198,25 @@ CodonUsage = {
         'CCC': 5.52,
 }
 
-def compute_score2(x):
+
+def compute_rarity_score(x):
+    """Compute the rarity score of a list of codons
+    The higer this score, the more rare codons are used
+    """
     return sum([1+(8.-CodonUsage[c])/8. for c in x if (CodonUsage[c]<=8.)]) 
 
-def smartcodonproduct(*args):
-    pools=list(map(tuple,args))
-    result=[[]]
-    position=[[]]
-    for pool in pools:
-        result=[x+[y] for x in result for y in pool]
-        position=[i+[j] for i in position for (j,y) in enumerate(pool)]
-    score1=[max(x)+sum(x) for x in position]
-    score2=[compute_score2(x) for x in result]
-    combination=list(zip(score2,result))
-    s=sorted(combination,key=lambda x: x[0])
-    return s
-    #sortedresults=[x[1] for x in s]
-    #sortedscores=[x[0] for x in s]
-    #return (sortedresults,sortedscores)
+
+def generate_synonymous_combinations(codons_list):
+    """Try all possible combinations of sets of codons,
+    taking one codon of each set,
+    and sort them according to the rarity score
+    with the combinantion using the less rare codons first
+    """
+    import itertools
+    score=dict()
+    for combination in itertools.product(*[SynonymousCodons[i]+[i] for i in codons_list]):
+        score[combination]=compute_rarity_score(combination)
+    return sorted(score.items(), key=lambda x: x[1])
 
 
 mfsc=dict() # Most Frequent Synonymous Codon

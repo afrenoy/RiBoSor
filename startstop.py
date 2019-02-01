@@ -20,6 +20,7 @@ def removestopinframepx(s0,x,verbose=True):
     """Returns the modified sequence and the number of remaining stops"""
     import itertools
     
+    #assert(type(s0)==str) #NON!!
     assert (x>0) and (x<3)
     prot0=s0.translate()
     l0=len(s0)
@@ -36,16 +37,12 @@ def removestopinframepx(s0,x,verbose=True):
     while(pt>-1):
         # Find the involved codons in s0
         p1=pt*3
-        c1=s0[p1:p1+3]
-        c2=s0[p1+3:p1+6]
+        c1=str(s0[p1:p1+3])
+        c2=str(s0[p1+3:p1+6])
         # Try to change them with synonymous
         candfound=False
-        l1=list(SynonymousCodons[str(c1)])
-        l2=list(SynonymousCodons[str(c2)])
-        l1.append(str(c1))
-        l2.append(str(c2))
         allcand=dict()
-        for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2):
+        for ((cand1,cand2),rarity_score) in codonsfun.generate_synonymous_combinations([c1,c2]):
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
             new[p1+3:p1+6]=cand2[0:3]
@@ -60,7 +57,7 @@ def removestopinframepx(s0,x,verbose=True):
                 allcand[(cand1,cand2)]=([(c1+c2)[i]==BP for (i,BP) in enumerate(cand1+cand2)].count(False),rarity_score)
         if candfound: # We found at least one candidate
             # Find the best one (less BPS and less rare codons) among all possible candidates
-            (cand1,cand2)=sorted(allcand,key=lambda u: allcand[u][0]+int(allcand[u][1]*10.))[0]
+            (cand1,cand2)=sorted(allcand,key=lambda u: float(allcand[u][0])+allcand[u][1]*10.)[0]
             changedposition=changedposition+[p1+i for (i,BP) in enumerate(cand1+cand2) if BP!=(c1+c2)[i]]
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
@@ -154,12 +151,8 @@ def removestartinframepx(s0,x,verbose=True):
         c2=s0[p1+3:p1+6]
         # Try to change them with synonymous
         candfound=False
-        l1=list(SynonymousCodons[str(c1)])
-        l2=list(SynonymousCodons[str(c2)])
-        l1.append(str(c1))
-        l2.append(str(c2))
         allcand=dict()
-        for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2):
+        for ((cand1,cand2),rarity_score) in codonsfun.generate_synonymous_combinations([c1,c2]):
             new=list(s0)
             new[p1:p1+3]=cand1[0:3]
             new[p1+3:p1+6]=cand2[0:3]
@@ -263,8 +256,7 @@ def removeFShotspots2frame(sequence,frame,maxlrun,begconserve,endconserve):
         nbstopsbefore=str(Seq(localseqbefore[frame:lcontext-3+frame]).translate()).count('*')
 
         # Generate all the possible combinations of synonymous codons and the corresponding local sequence 
-        allpossible = [SynonymousCodons[k]+[k] for k in codons]
-        allcombination = map(lambda combination: (combination[0],reduce(lambda x,y: x+y,combination[1])),codonsfun.smartcodonproduct(*allpossible))
+        allcombination = map(lambda combination: (combination[1],reduce(lambda x,y: x+y,combination[0])),codonsfun.generate_synonymous_combinations(codons))
 
         # Only keep the combinations that do not create start/stop in alternative frame
         allowedcombination = filter(lambda combination: countstart((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame])<=nbstartsbefore and str(Seq((prefixe+combination[1]+suffixe)[frame:lcontext-3+frame]).translate()).count('*')<=nbstopsbefore,allcombination)
@@ -329,14 +321,10 @@ def removerarecodonsinframepx(sequence,frame,maxlrun,rarethreshold=8.,verbose=Tr
         c2=sequence[3*irare+3:3*irare+6]
         #print codons[irare] + ' is rare ' + c1 + ' ' + c2
         candfound=False
-        l1=list(SynonymousCodons[c1])
-        l2=list(SynonymousCodons[c2])
-        l1.append(str(c1))
-        l2.append(str(c2))
-        old_rarity_score=codonsfun.compute_score2([c1,c2]) # Rarity score of the six bp sequence in main frame
+        old_rarity_score=codonsfun.compute_rarity_score([c1,c2]) # Rarity score of the six bp sequence in main frame
         old_usage_framepx=codonsfun.CodonUsage[codons[irare]] # Codon usage of the involved rare codon in alternative frame
         allcand=dict()
-        for (rarity_score,(cand1,cand2)) in codonsfun.smartcodonproduct(l1,l2): # Warning: rarity_score is calculated in the frame of GalK.
+        for ((cand1,cand2),rarity_score) in codonsfun.generate_synonymous_combinations([c1,c2]): # Warning: rarity_score is calculated in the frame of GalK.
             #print cand1 + ' ' + cand2 + ' ' + str(irare)
             new=list(sequence)
             new[3*irare:3*irare+3]=cand1[0:3]
