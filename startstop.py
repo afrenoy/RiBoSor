@@ -203,13 +203,31 @@ def removestartinframepx(s0, x, verbose=True):
     return (s0, changedposition, [i * 3 + x for (i, A) in enumerate(codonfold(sx)) if isstart(A)])
 
 
+def frameshiftability(sequence):
+    """Measuring the susceptibility for frameshifts due to runs of repeated nucleotides"""
+    """The sequence is taken as a python string"""
+    n = 2
+    nbrepeats = [0 for nucl in sequence]
+    for (i, nucl) in enumerate(sequence):
+        if i == 0:
+            nbrepeats[i] = 1
+            continue
+        if (sequence[i-1] == sequence[i]):
+            nbrepeats[i] = nbrepeats[i-1]+1
+        else:
+            nbrepeats[i] = 1
+    return nbrepeats
+
+
+def frameshiftability_score(sequence):
+    nbrepeats = frameshiftability(sequence)
+    return sum(nbrepeats)-len(sequence)
+
+
 def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
     """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame."""
     """Input is a python string and not a BioSeq object"""
     import itertools
-    from sys import path
-    path.append('/Users/antoine/code/bioinfo')
-    import tunestopfs
 
     # Check consistency of inputs
     assert(type(sequence) == str)
@@ -226,7 +244,7 @@ def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
 
     # Find all runs
     initsequence = sequence
-    nbrepeats = tunestopfs.frameshiftability(sequence)
+    nbrepeats = frameshiftability(sequence)
     startrepeats = [i + 1 - maxlrun for (i, x) in enumerate(nbrepeats) if x == maxlrun]
 
     # Try to eliminate them
@@ -268,7 +286,7 @@ def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
         allowedcombination = filter(lambda combination: countstart((prefixe + combination[1] + suffixe)[frame:lcontext - 3 + frame]) <= nbstartsbefore and str(Seq((prefixe + combination[1] + suffixe)[frame:lcontext - 3 + frame]).translate()).count('*') <= nbstopsbefore, allcombination)
 
         # Sort them according to potentiallity for frame shifts and smaller use or rare codons
-        bestcombination = min(allowedcombination, key=lambda combination: tunestopfs.frameshiftability_score(prefixe + combination[1] + suffixe) * 100 + int(combination[0] * 10.))
+        bestcombination = min(allowedcombination, key=lambda combination: frameshiftability_score(prefixe + combination[1] + suffixe) * 100 + int(combination[0] * 10.))
         # could be use as a criteria to refine above metric: when equals in frameshiftability, we could choose the combination that minimizes the number of (synonymous) BPS made.
         # print [x==sequence[firstpos-firstpos%3+i] for (i,x) in enumerate(bestcombination)].count(False)
 
@@ -288,7 +306,7 @@ def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
     assert(finalnbstops <= initnbstops)  # warning: not tolerant
 
     # return the new sequence and the remaining hotspots
-    newnbrepeats = tunestopfs.frameshiftability(sequence)
+    newnbrepeats = frameshiftability(sequence)
     remaininghotspots = [i + 1 - maxlrun for (i, x) in enumerate(newnbrepeats) if x == maxlrun]
     return(sequence, remaininghotspots)
 
@@ -300,8 +318,6 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
         Do not create fs hotspots
         Do not add rare codons in main frame
         '''
-    from sys import path
-    import tunestopfs
     assert(type(sequence) == str)
     assert (frame > 0) and (frame < 3)
     protein = Seq(sequence).translate()
@@ -309,7 +325,7 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
     sx = sequence[frame:l0 - 3 + frame]
     initnbstarts = countstart(sx)
     initnbstops = str(Seq(sx).translate()).count('*')
-    initfs = tunestopfs.frameshiftability(sequence)
+    initfs = frameshiftability(sequence)
     initfsscore = sum([x for x in initfs if x >= maxlrun])
 
     changedposition = []
@@ -345,7 +361,7 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
             if str(Seq(newsx).translate()).count('*') > initnbstops:
                 # print 'no (stop)'
                 continue
-            newfs = tunestopfs.frameshiftability(newsequence)
+            newfs = frameshiftability(newsequence)
             newfsscore = sum([x for x in newfs if x >= maxlrun])
             if newfsscore > initfsscore:
                 # print 'no (fs)'
@@ -400,3 +416,6 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
         if verbose:
             print("unable to remove rare codon " + codons[irare] + " at position " + str(3 * irare + frame))
     return (sequence, changedposition, [3 * x + frame for x in remaining])
+
+
+
