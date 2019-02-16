@@ -169,9 +169,9 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
     proportion = float(sizeoverlap)/len(genesequence)
     print('%d,%d,%.18f,%d,%d,%d,%d,%d,%s,%s' % (pos, sizeoverlap, proportion, shift, len_spacer, distBP, distAA, len(remaining_stops), 'ff266af', str(modified_genesequence)), file=save)
     rbsfile.close()
-    print(pos)
-    print(modified_genesequence[pos:pos+len_rbs+len_spacer+3])
-    print(modified_genesequence[:pos]+' '+origgenesequence[pos:pos+len_rbs + len_spacer+3]+' '+modified_genesequence[pos+len_rbs+len_spacer+3:])
+    #print(pos)
+    #print(modified_genesequence[pos:pos+len_rbs+len_spacer+3])
+    #print(modified_genesequence[:pos]+' '+origgenesequence[pos:pos+len_rbs + len_spacer+3]+' '+modified_genesequence[pos+len_rbs+len_spacer+3:])
 
 
 def findRBS(genesequence, save, detaildir):
@@ -214,8 +214,15 @@ opts, args = getopt.getopt(sys.argv[1:], "", [])
 inputfilename = args[0]
 if not ".fasta" in inputfilename:
     print("input should be a fasta file")
-outputfilename = os.path.splitext(inputfilename)[0]+".csv"
-detaildir = os.path.splitext(inputfilename)[0]
+if len(args) > 1:
+    outputdir = args[1]
+    if not os.path.isdir(outputdir):
+        os.mkdir(outputdir)
+    detaildir = os.path.join(outputdir, os.path.splitext(os.path.basename(inputfilename))[0])
+    outputfilename = detaildir + ".csv"
+else:
+    outputfilename = os.path.splitext(inputfilename)[0]+".csv"
+    detaildir = os.path.splitext(inputfilename)[0]
 
 save = open(outputfilename, "x")
 print("Start position, Length of the Overlap, Fraction protected, Frame, Spacer, Number of base pair changed, Number of amino acid changed, Number of remaining STOPS, Algorithm, New sequence", file=save)
