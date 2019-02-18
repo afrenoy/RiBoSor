@@ -51,7 +51,7 @@ def evaluateRBS(sequence, maxdist):
 
 
 # TODO: modify so it reports every change.
-def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nonsyn, differ, removestart, removefs, save, detaildir):
+def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nonsyn, differ, save, detaildir, removestart=2, removefs=True, optimize_beginning=True):
     # In one text file per RBS, output the detail of every changed nucleotide
     rbsfile = open("%s/%d.txt" % (detaildir, pos), "w")
     print("-- Original sequence\n%s" % str(origgenesequence), file=rbsfile)
@@ -84,12 +84,15 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         print("  At position %d replaced %s by %s (non synonymous, %s -> %s) to create a perfect RBS-START"
               % (posnonsyn, origgenesequence[posnonsyn], genesequence[posnonsyn], origcodon, newcodon), file=rbsfile)
 
-    # Make synonymous changes in galK sequence to try to get rid of this fucking cryptic promoter
-    if fr > 25:
+    # Make synonymous changes in existing gene to optimize expression by removing rare codons
+    # In some cases, codon optimization is also a good way of removing cryptit promoters
+    optimized_end_galK = startstop.optimize(str(genesequence[fr+6:]))
+    if optimize_beginning and (fr > 25):
         optimized_beg_galK = startstop.optimize(str(genesequence[:fr-24]))
         optimized_genesequence = Seq(optimized_beg_galK)+genesequence[fr-24:]
-    optimized_end_galK = startstop.optimize(str(genesequence[fr+6:]))
-    optimized_genesequence = optimized_genesequence[:fr+6]+Seq(optimized_end_galK)
+        optimized_genesequence = optimized_genesequence[:fr+6]+Seq(optimized_end_galK)
+    else:
+        optimized_genesequence = genesequence[:fr+6]+Seq(optimized_end_galK)
     print("-- Sequence after optimizing the frame of galK\n%s" % optimized_genesequence, file=rbsfile)
 
     # Remove the stop codons that could exist in our new frame (aph, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
@@ -207,7 +210,7 @@ def findRBS(genesequence, save, detaildir):
         # Treat the best RBS we found
         if totreat:
             besttotreat = sorted(totreat, key=lambda x: totreat[x][1]*1000 + int(totreat[x][5]*30) + totreat[x][3])[0]
-            treatRBS(genesequence, pos, besttotreat, totreat[besttotreat][0], totreat[besttotreat][1], totreat[besttotreat][2], totreat[besttotreat][4], 2, True, save, detaildir)
+            treatRBS(genesequence, pos, besttotreat, totreat[besttotreat][0], totreat[besttotreat][1], totreat[besttotreat][2], totreat[besttotreat][4], save, detaildir, removestart=2, removefs=True)
 
 
 opts, args = getopt.getopt(sys.argv[1:], "", [])
@@ -224,12 +227,12 @@ else:
     outputfilename = os.path.splitext(inputfilename)[0]+".csv"
     detaildir = os.path.splitext(inputfilename)[0]
 
-save = open(outputfilename, "x")
-print("Start position, Length of the Overlap, Fraction protected, Frame, Spacer, Number of base pair changed, Number of amino acid changed, Number of remaining STOPS, Algorithm, New sequence", file=save)
+outputfile = open(outputfilename, "x")
+print("Start position, Length of the Overlap, Fraction protected, Frame, Spacer, Number of base pair changed, Number of amino acid changed, Number of remaining STOPS, Algorithm, New sequence", file=outputfile)
 
 fasta_record = SeqIO.read(open(inputfilename, "r"), "fasta")
 bioseq = fasta_record.seq
 
 os.mkdir(detaildir)
 
-findRBS(bioseq, save, detaildir)
+findRBS(bioseq, outputfile, detaildir)
