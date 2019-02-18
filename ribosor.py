@@ -68,7 +68,11 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         return
     fr = posfirstcds-shift+3  # The position in the upstream gene where we will start considering making synonymous change to eliminate STOP codons in our downstream new frame
     # We do not start at posfirtscds-shift otherwise we would risk to modify the RBS we just created.
-    assert len(genesequence[fr:]) % 3 == 0
+    if not (len(genesequence[fr:]) % 3 == 0):
+        assert(len(origgenesequence) % 3 == len(genesequence) % 3)
+        print("Warning: the original sequence length is not a multiple of 3 (pseudogene?), cutting...", file=rbsfile)
+        genesequence = genesequence[:len(genesequence) - len(genesequence) % 3]
+        origgenesequence = origgenesequence[:len(origgenesequence) - len(origgenesequence) % 3]
 
     # Output the synonymous changes we made to create this RBS-START
     print("-- Creation of the RBS:", file=rbsfile)
