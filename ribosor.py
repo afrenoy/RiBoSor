@@ -7,9 +7,10 @@ from Bio.SeqRecord import SeqRecord
 import os
 import getopt
 import sys
+import argparse
+from functools import reduce
 import startstop
 import codons as codonsfun
-from functools import reduce
 
 allsyn = codonsfun.SynonymousCodons
 allnonsyn = codonsfun.NonSynonymousCodons
@@ -53,9 +54,11 @@ def evaluateRBS(sequence, maxdist):
 # TODO: modify so it reports every change.
 def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nonsyn, differ, save, detaildir, removestart=2, removefs=True, optimize_beginning=True):
     # In one text file per RBS, output the detail of every changed nucleotide
-    rbsfile = open("%s/%d.txt" % (detaildir, pos), "w")
-    print("-- Original sequence\n%s" % str(origgenesequence), file=rbsfile)
-
+    if detaildir:
+        rbsfile = open("%s/%d.txt" % (detaildir, pos), "w")
+        print("-- Original sequence\n%s" % str(origgenesequence), file=rbsfile)
+    else:
+        rbsfile = None
     # Compute the new sequence from the original sequence and the RBS-START
     global len_rbs
     posfirstcds = pos+len_rbs+len_spacer+3
@@ -70,23 +73,26 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
     # We do not start at posfirtscds-shift otherwise we would risk to modify the RBS we just created.
     if not (len(genesequence[fr:]) % 3 == 0):
         assert(len(origgenesequence) % 3 == len(genesequence) % 3)
-        print("Warning: the original sequence length is not a multiple of 3 (pseudogene?), cutting...", file=rbsfile)
+        if rbsfile:
+            print("Warning: the original sequence length is not a multiple of 3 (pseudogene?), cutting...", file=rbsfile)
         genesequence = genesequence[:len(genesequence) - len(genesequence) % 3]
         origgenesequence = origgenesequence[:len(origgenesequence) - len(origgenesequence) % 3]
 
     # Output the synonymous changes we made to create this RBS-START
-    print("-- Creation of the RBS:", file=rbsfile)
-    for i in differ:
-        print("  At position %d replaced %s by %s (synonymous) to create a perfect RBS-START"
-              % (i, origgenesequence[i], genesequence[i]), file=rbsfile)
+    if rbsfile:
+        print("-- Creation of the RBS:", file=rbsfile)
+        for i in differ:
+            print("  At position %d replaced %s by %s (synonymous) to create a perfect RBS-START"
+                  % (i, origgenesequence[i], genesequence[i]), file=rbsfile)
 
     # Report the possible non synonymous change made to create a perfect RBS-START
     if nb_nonsyn == 1:
         posnonsyn = pos+pos_nonsyn
         origcodon = origgenesequence[posnonsyn:posnonsyn+3].translate()
         newcodon = genesequence[posnonsyn:posnonsyn+3].translate()
-        print("  At position %d replaced %s by %s (non synonymous, %s -> %s) to create a perfect RBS-START"
-              % (posnonsyn, origgenesequence[posnonsyn], genesequence[posnonsyn], origcodon, newcodon), file=rbsfile)
+        if rbsfile:
+            print("  At position %d replaced %s by %s (non synonymous, %s -> %s) to create a perfect RBS-START"
+                  % (posnonsyn, origgenesequence[posnonsyn], genesequence[posnonsyn], origcodon, newcodon), file=rbsfile)
 
     # Make synonymous changes in existing gene to optimize expression by removing rare codons
     # In some cases, codon optimization is also a good way of removing cryptit promoters
@@ -97,7 +103,8 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         optimized_genesequence = optimized_genesequence[:fr+6]+Seq(optimized_end_galK)
     else:
         optimized_genesequence = genesequence[:fr+6]+Seq(optimized_end_galK)
-    print("-- Sequence after optimizing the frame of galK\n%s" % optimized_genesequence, file=rbsfile)
+    if rbsfile:
+        print("-- Sequence after optimizing the frame of galK\n%s" % optimized_genesequence, file=rbsfile)
 
     # Remove the stop codons that could exist in our new frame (aph, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
     (end_genesequence_wostop, changedpositionstop, remaining_stops) = startstop.removestopinframepx(optimized_genesequence[fr:], shift, False)
@@ -117,57 +124,62 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         changedpositionstart = []
         remaining_starts = []
 
-    # Output information about the synonymous changes we made to remove the stop codons
-    print('-- Remove stop codons in new frame', file=rbsfile)
-    for p in changedpositionstop:
-        # It is possible that one change is reverted by the next one if changing two close positions, in which case we do not need to report
-        if str(optimized_genesequence[fr+p]) != str(modified_genesequence[fr+p]):
-            print("  At position %d replaced %s by %s (synonymous) to eliminate a STOP codon"
-                  % (fr+p, optimized_genesequence[fr+p], modified_genesequence[fr+p]), file=rbsfile)
+    if rbsfile:
+        # Output information about the synonymous changes we made to remove the stop codons
+        print('-- Remove stop codons in new frame', file=rbsfile)
+        for p in changedpositionstop:
+            # It is possible that one change is reverted by the next one if changing two close positions, in which case we do not need to report
+            if str(optimized_genesequence[fr+p]) != str(modified_genesequence[fr+p]):
+                print("  At position %d replaced %s by %s (synonymous) to eliminate a STOP codon"
+                      % (fr+p, optimized_genesequence[fr+p], modified_genesequence[fr+p]), file=rbsfile)
 
-    # Output information about potential remaining STOP codons we were not able to remove
-    for r in remaining_stops:
-        print("At position %d unable to remove a STOP codon" % (fr+r), file=rbsfile)
+        # Output information about potential remaining STOP codons we were not able to remove
+        for r in remaining_stops:
+            print("At position %d unable to remove a STOP codon" % (fr+r), file=rbsfile)
 
-    # Output information about the synonymous changes we made to remove the start codons
-    print("-- Remove start codons in new frame", file=rbsfile)
-    for p in changedpositionstart:
-        if str(optimized_genesequence[fr+p]) != str(modified_genesequence[fr+p]):
-            print("  At position %d replaced %s by %s (synonymous) to eliminate a START codon"
-                  % (fr+p, optimized_genesequence[fr+p], modified_genesequence[fr+p]), file=rbsfile)
+        # Output information about the synonymous changes we made to remove the start codons
+        print("-- Remove start codons in new frame", file=rbsfile)
+        for p in changedpositionstart:
+            if str(optimized_genesequence[fr+p]) != str(modified_genesequence[fr+p]):
+                print("  At position %d replaced %s by %s (synonymous) to eliminate a START codon"
+                      % (fr+p, optimized_genesequence[fr+p], modified_genesequence[fr+p]), file=rbsfile)
 
-    # Output information about potential remaining START codons we were not able to remove
-    for r in remaining_starts:
-        print("At position %s unable to remove a START codon" % (fr+r), file=rbsfile)
+        # Output information about potential remaining START codons we were not able to remove
+        for r in remaining_starts:
+            print("At position %s unable to remove a START codon" % (fr+r), file=rbsfile)
 
-    if removefs:
-        print("-- Remove FS hotspots (single nucleotide repeats)", file=rbsfile)
+        if removefs:
+            print("-- Remove FS hotspots (single nucleotide repeats)", file=rbsfile)
         # Remove FS hotspots (everywhere, not only in the overlapping sequence)
         (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence), shift, 4, pos, pos+len_rbs+len_spacer+3)
-        for pn in [i for (i, x) in enumerate(str(modified_genesequence)) if not x == nofs_sequence[i]]:
-            if str(nofs_sequence[pn]) != str(modified_genesequence[pn]):
-                print("  At position %d replaced %s by %s (synonymous) to eliminate a FS hotspot"
-                      % (pn, modified_genesequence[pn], nofs_sequence[pn]), file=rbsfile)
+        if rbsfile:
+            for pn in [i for (i, x) in enumerate(str(modified_genesequence)) if not x == nofs_sequence[i]]:
+                if str(nofs_sequence[pn]) != str(modified_genesequence[pn]):
+                    print("  At position %d replaced %s by %s (synonymous) to eliminate a FS hotspot"
+                          % (pn, modified_genesequence[pn], nofs_sequence[pn]), file=rbsfile)
 
-        # Output information about potential FS hotspots we were not able to remove
-        for pn in remaininghotspots:
-            print("At position %d unable to remove a FS hotspot" % pn, file=rbsfile)
+            # Output information about potential FS hotspots we were not able to remove
+            for pn in remaininghotspots:
+                print("At position %d unable to remove a FS hotspot" % pn, file=rbsfile)
 
         modified_genesequence = Seq(nofs_sequence)
 
     # Remove rare codons in alternative frame
     (end_genesequence_worare, changedpositionrare, remaining_rare) = startstop.removerarecodonsinframepx(str(modified_genesequence)[fr:], shift, 4, 8.0, False)
     modified_genesequence = modified_genesequence[:fr] + Seq(end_genesequence_worare)
-    # Output information about changes we made to remove these codons
-    print("-- Remove rare codons", file=rbsfile)
-    for p in changedpositionrare:
-        if str(optimized_genesequence[fr+p]) != str(modified_genesequence[fr+p]):
-            print("  At position %d replaced %s by %s (synonymous) to eliminate a rare codon"
-                  % (fr+p, optimized_genesequence[fr+p], modified_genesequence[fr+p]), file=rbsfile)
-    for r in remaining_rare:
-        print("At position %d unable to remove a rare codon" % (fr+r), file=rbsfile)
+    if rbsfile:
+        # Output information about changes we made to remove these codons
+        print("-- Remove rare codons", file=rbsfile)
+        for p in changedpositionrare:
+            if str(optimized_genesequence[fr+p]) != str(modified_genesequence[fr+p]):
+                print("  At position %d replaced %s by %s (synonymous) to eliminate a rare codon"
+                      % (fr+p, optimized_genesequence[fr+p], modified_genesequence[fr+p]), file=rbsfile)
+        for r in remaining_rare:
+            print("At position %d unable to remove a rare codon" % (fr+r), file=rbsfile)
 
-    print("-- Final sequence\n%s" % modified_genesequence, file=rbsfile)
+    if rbsfile:
+        print("-- Final sequence\n%s" % modified_genesequence, file=rbsfile)
+        rbsfile.close()
 
     # Compute other information we want about this overlap (number of syn/nonsyn changes, absolute and relative size, ...)
     distAA = [str(modified_genesequence.translate())[i] == x for (i, x) in enumerate(str(origgenesequence.translate()))].count(False)
@@ -175,13 +187,12 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
     sizeoverlap = (len(genesequence)-(pos+len_rbs+len_spacer))
     proportion = float(sizeoverlap)/len(genesequence)
     print('%d,%d,%.18f,%d,%d,%d,%d,%d,%s,%s' % (pos, sizeoverlap, proportion, shift, len_spacer, distBP, distAA, len(remaining_stops), 'ff266af', str(modified_genesequence)), file=save)
-    rbsfile.close()
     #print(pos)
     #print(modified_genesequence[pos:pos+len_rbs+len_spacer+3])
     #print(modified_genesequence[:pos]+' '+origgenesequence[pos:pos+len_rbs + len_spacer+3]+' '+modified_genesequence[pos+len_rbs+len_spacer+3:])
 
 
-def findRBS(genesequence, save, detaildir):
+def findRBS(genesequence, save, detaildir=None):
     lseq = len(genesequence)
     local = 18  # RBS (6) + spacer (<=7) + ATG (3) rounded to the next codon
     for pos in range(0, lseq-local):  # For each position in the gene, we try to start an RBS there
@@ -217,26 +228,36 @@ def findRBS(genesequence, save, detaildir):
             treatRBS(genesequence, pos, besttotreat, totreat[besttotreat][0], totreat[besttotreat][1], totreat[besttotreat][2], totreat[besttotreat][4], save, detaildir, removestart=2, removefs=True)
 
 
-opts, args = getopt.getopt(sys.argv[1:], "", [])
-inputfilename = args[0]
-if not ".fasta" in inputfilename:
-    print("input should be a fasta file")
-if len(args) > 1:
-    outputdir = args[1]
-    if not os.path.isdir(outputdir):
-        os.mkdir(outputdir)
-    detaildir = os.path.join(outputdir, os.path.splitext(os.path.basename(inputfilename))[0])
-    outputfilename = detaildir + ".csv"
+
+parser = argparse.ArgumentParser(description="The RiBoSor")
+parser.add_argument('inputfile', type=str, help='input fasta file')
+parser.add_argument('--outputdir', type=str, help='output directory')
+parser.add_argument('--summary', action='store_true', default=False, help='only summary csv file (no detail by candidate)')
+args = parser.parse_args()
+
+if not ".fasta" in args.inputfile:
+    print("Warning: input should be a fasta file")
+
+if args.outputdir:
+    outputdir = args.outputdir
 else:
-    outputfilename = os.path.splitext(inputfilename)[0]+".csv"
-    detaildir = os.path.splitext(inputfilename)[0]
+    outputdir = os.path.splitext(args.inputfile)[0]
+os.mkdir(outputdir)
 
-outputfile = open(outputfilename, "x")
-print("Start position, Length of the Overlap, Fraction protected, Frame, Spacer, Number of base pair changed, Number of amino acid changed, Number of remaining STOPS, Algorithm, New sequence", file=outputfile)
+records = list(SeqIO.parse(open(args.inputfile, "r"), "fasta"))
+for fasta_record in records:
+    bioseq = fasta_record.seq
+    if len(records) > 1:
+        seqname = fasta_record.name
+    else:
+        seqname = os.path.splitext(args.inputfile)[0]
+    seqdir = os.path.join(outputdir, seqname)+'.details'
+    if args.summary:
+        seqdir = None
+    else:
+        os.mkdir(seqdir)
+    outputfilename = os.path.join(outputdir,seqname)+'.csv'
+    outputfile = open(outputfilename, "x")
+    print("Start position, Length of the Overlap, Fraction protected, Frame, Spacer, Number of base pair changed, Number of amino acid changed, Number of remaining STOPS, Algorithm, New sequence", file=outputfile)
+    findRBS(bioseq, outputfile, seqdir)
 
-fasta_record = SeqIO.read(open(inputfilename, "r"), "fasta")
-bioseq = fasta_record.seq
-
-os.mkdir(detaildir)
-
-findRBS(bioseq, outputfile, detaildir)
