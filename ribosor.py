@@ -245,7 +245,7 @@ else:
 os.mkdir(outputdir)
 
 records = list(SeqIO.parse(open(args.inputfile, "r"), "fasta"))
-for fasta_record in records:
+for nseq, fasta_record in enumerate(records):
     bioseq = fasta_record.seq
     if len(records) > 1:
         seqname = fasta_record.name
@@ -259,5 +259,8 @@ for fasta_record in records:
     outputfilename = os.path.join(outputdir,seqname)+'.csv'
     outputfile = open(outputfilename, "x")
     print("Start position, Length of the Overlap, Fraction protected, Frame, Spacer, Number of base pair changed, Number of amino acid changed, Number of remaining STOPS, Algorithm, New sequence", file=outputfile)
-    findRBS(bioseq, outputfile, seqdir)
+    try:
+        findRBS(bioseq, outputfile, seqdir)
+    except:
+        print("Error while processing record %d of file %s" % (nseq, args.inputfile))
 
