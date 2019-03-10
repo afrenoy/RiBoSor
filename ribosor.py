@@ -242,7 +242,7 @@ if args.outputdir:
     outputdir = args.outputdir
 else:
     outputdir = os.path.splitext(args.inputfile)[0]
-os.mkdir(outputdir)
+os.makedirs(outputdir, exist_ok=True)
 
 records = list(SeqIO.parse(open(args.inputfile, "r"), "fasta"))
 for nseq, fasta_record in enumerate(records):
