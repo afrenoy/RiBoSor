@@ -1,13 +1,17 @@
+""" Functions to remove start codons, stop codons, mono-nucleotide repeats and rare codons, using genetic code redundancy
+These functions can be used in the main reading or in an alternative reading frame
+"""
+
 from Bio import SeqIO
 from Bio.Seq import Seq
 
 import codons as codonsfun
 from functools import reduce
 SynonymousCodons = codonsfun.SynonymousCodons
-allnonsyn = codonsfun.NonSynonymousCodons
 
 
 def optimize(s0):
+    """Codon optimization: replace each codon by the most common alternative"""
     newseq = list(s0)
     for i in range(0, len(s0), 3):
         newcodon = codonsfun.mfsc[s0[i:i + 3]]
@@ -17,12 +21,11 @@ def optimize(s0):
 
 
 def removestopinframepx(s0, x, verbose=True):
-    """Take a sequence and remove stop codons in alternative frame with only synonymous changes in main frame"""
-    """The sequence is taken as a BioSeq object and not as a python string"""
-    """Returns the modified sequence and the number of remaining stops"""
-    import itertools
+    """Take a sequence and remove stop codons in alternative frame with only synonymous changes in main frame
+    The sequence is taken as a BioSeq object and not as a python string
+    Returns the modified sequence and the number of remaining stops
+    """
 
-    # assert(type(s0)==str) #NON!!
     assert (x > 0) and (x < 3)
     prot0 = s0.translate()
     l0 = len(s0)
@@ -94,10 +97,12 @@ def codonfold(sx):
 
 
 def isstart(codon):
+    """Is this codon a start?"""
     return codon == 'ATG' or codon == 'GTG' or codon == 'TTG'
 
 
 def findfirststart(sx, m=0):
+    """Find the next start codon starting from position m"""
     sfx = codonfold(sx)
     assert(len(sfx) >= m)
     i = m
@@ -107,34 +112,18 @@ def findfirststart(sx, m=0):
         i = i + 1
     return -1
 
-# def firststart(sfx,off=0):
-#   if len(sfx)==0:
-#      return -1
-#   elif isstart(sfx[0]):
-#      return off
-#   else:
-#      return firststart(sfx[1:],off+1)
-
-# def findfirststart(sx, m=0):
-#   sfx=codonfold(sx)
-#   assert(len(sfx)>=m)
-#   cand=firststart(sfx[m:])
-#   if cand>-1:
-#      return cand+m
-#   else:
-#      return -1
-
 
 def countstart(sx):
+    """How many start codons does the sequence contain?"""
     sfx = codonfold(sx)
     return len([c for c in sfx if isstart(c)])
 
 
 def removestartinframepx(s0, x, verbose=True):
-    """Take a sequence and remove start codons in alternative frame with only synonymous changes in main frame, without creating stop codons"""
-    """The sequence is taken as a python string and NOT a BioSeq object"""
-    """Returns the modified sequence and the number of remaining starts"""
-    import itertools
+    """Take a sequence and remove start codons in alternative frame with only synonymous changes in main frame, without creating stop codons
+    The sequence is taken as a python string and NOT a BioSeq object
+    Returns the modified sequence and the number of remaining starts
+    """
 
     assert(type(s0) == str)
     assert (x > 0) and (x < 3)
@@ -204,8 +193,9 @@ def removestartinframepx(s0, x, verbose=True):
 
 
 def frameshiftability(sequence):
-    """Measuring the susceptibility for frameshifts due to runs of repeated nucleotides"""
-    """The sequence is taken as a python string"""
+    """Measure the susceptibility for frameshifts due to runs of repeated nucleotides
+    The sequence is taken as a python string
+    """
     n = 2
     nbrepeats = [0 for nucl in sequence]
     for (i, nucl) in enumerate(sequence):
@@ -225,9 +215,9 @@ def frameshiftability_score(sequence):
 
 
 def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
-    """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame."""
-    """Input is a python string and not a BioSeq object"""
-    import itertools
+    """Try to remove runs of 3 base pair or more doing only synonymous changes in main frame, and without creating start and stop codon in alternative frame.
+    Input is a python string and not a BioSeq object
+    """
 
     # Check consistency of inputs
     assert(type(sequence) == str)
@@ -312,12 +302,12 @@ def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
 
 
 def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbose=True):
-    '''Try to remove rare codons in alternative frame with the following constraints:
-        Do not add starts in alternative frame
-        Do not add stops in alternative frame
-        Do not create fs hotspots
-        Do not add rare codons in main frame
-        '''
+    """Try to remove rare codons in alternative frame with the following constraints:
+    Do not add starts in alternative frame
+    Do not add stops in alternative frame
+    Do not create fs hotspots
+    Do not add rare codons in main frame
+    """
     assert(type(sequence) == str)
     assert (frame > 0) and (frame < 3)
     protein = Seq(sequence).translate()
@@ -416,6 +406,5 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
         if verbose:
             print("unable to remove rare codon " + codons[irare] + " at position " + str(3 * irare + frame))
     return (sequence, changedposition, [3 * x + frame for x in remaining])
-
 
 

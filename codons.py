@@ -1,3 +1,5 @@
+""" Data and simple functions to work with the genetic code
+"""
 
 NonSynonymousCodons = {
     'TTC': ['TAT', 'TAC', 'TGG', 'TGG', 'ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT'],

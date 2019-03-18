@@ -1,33 +1,20 @@
 #!/usr/bin/env python3
-# -*- coding:UTF-8 -*-
 
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import os
-import getopt
-import sys
 import argparse
 from functools import reduce
-import startstop
+import startstopfs
 import codons as codonsfun
 
 allsyn = codonsfun.SynonymousCodons
 allnonsyn = codonsfun.NonSynonymousCodons
 
-minspace = 3
-maxspace = 7
-rbs = 'AGGAGG'
-len_rbs = len(rbs)
-atg = 'ATG'
 
-
-def evaluateRBS(sequence, maxdist):
-    global minspace
-    global maxspace
-    global rbs
-    global len_rbs
-    global atg
+def evaluateRBS(sequence, maxdist, minspace=3, maxspace=7, atg = 'ATG', rbs = 'AGGAGG', len_rbs=6):
+    """ Evaluate whether a given sequence is a good RBS"""
     disttable = dict()
     relativefirstpostochange = dict()
     newsequence = dict()
@@ -51,8 +38,11 @@ def evaluateRBS(sequence, maxdist):
     return [(len_spacer, "".join(newsequence[len_spacer]), disttable[len_spacer], relativefirstpostochange[len_spacer]) for len_spacer in list(disttable.keys()) if disttable[len_spacer] <= maxdist]
 
 
-# TODO: modify so it reports every change.
-def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nonsyn, differ, save, detaildir, removestart=2, removefs=True, optimize_beginning=True):
+def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nonsyn, differ, save, detaildir, removestart=2, removefs=True, optimize_beginning=True, len_rbs=6):
+    """ Once a candidate RBS has been found, try to make it suitable for expression of a downstream protein
+    This function reports all changes it makes in a text file
+    These changes aim at: removing rare codons in both existing and new reading frames, removing stop codons downstream the new start in the new reading frame, removing the alternative start codons in the new reading frame, removing mono-nucleotide repeats (mutagenic motifs)
+    """
     # In one text file per RBS, output the detail of every changed nucleotide
     if detaildir:
         rbsfile = open("%s/%d.txt" % (detaildir, pos), "w")
@@ -60,7 +50,6 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
     else:
         rbsfile = None
     # Compute the new sequence from the original sequence and the RBS-START
-    global len_rbs
     posfirstcds = pos+len_rbs+len_spacer+3
     assert len(rbssequence) == len_rbs+len_spacer+3  # posfirstcds-pos
     # We do not use rbssequence entirely because we do not need the end
@@ -96,9 +85,9 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
 
     # Make synonymous changes in existing gene to optimize expression by removing rare codons
     # In some cases, codon optimization is also a good way of removing cryptit promoters
-    optimized_end_galK = startstop.optimize(str(genesequence[fr+6:]))
+    optimized_end_galK = startstopfs.optimize(str(genesequence[fr+6:]))
     if optimize_beginning and (fr > 25):
-        optimized_beg_galK = startstop.optimize(str(genesequence[:fr-24]))
+        optimized_beg_galK = startstopfs.optimize(str(genesequence[:fr-24]))
         optimized_genesequence = Seq(optimized_beg_galK)+genesequence[fr-24:]
         optimized_genesequence = optimized_genesequence[:fr+6]+Seq(optimized_end_galK)
     else:
@@ -107,15 +96,15 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         print("-- Sequence after optimizing the frame of galK\n%s" % optimized_genesequence, file=rbsfile)
 
     # Remove the stop codons that could exist in our new frame (aph, after the ATG) without modifying what is coded by the existing gene in main frame (GalK)
-    (end_genesequence_wostop, changedpositionstop, remaining_stops) = startstop.removestopinframepx(optimized_genesequence[fr:], shift, False)
+    (end_genesequence_wostop, changedpositionstop, remaining_stops) = startstopfs.removestopinframepx(optimized_genesequence[fr:], shift, False)
 
     # Remove the start codons that could exist in our new frame (aph) without modifying what is coded by the existing gene in main frame (GalK)
     if (removestart == 1):  # We only remove starts after the ATG of aph
-        (end_genesequence_wostopstart, changedpositionstart, remaining_starts) = startstop.removestartinframepx(str(end_genesequence_wostop), shift, False)
+        (end_genesequence_wostopstart, changedpositionstart, remaining_starts) = startstopfs.removestartinframepx(str(end_genesequence_wostop), shift, False)
         modified_genesequence = optimized_genesequence[:fr]+Seq(end_genesequence_wostopstart)
     elif (removestart == 2):  # We also remove starts before the ATG of aph
-        (end_genesequence_wostopstart, rel_changedpositionstart, rel_remaining_starts) = startstop.removestartinframepx(str(end_genesequence_wostop), shift, False)
-        (start_genesequence_wostart, abs_changedpositionstart, abs_remaining_starts) = startstop.removestartinframepx(str(optimized_genesequence[:pos-pos % 3]), shift, False)
+        (end_genesequence_wostopstart, rel_changedpositionstart, rel_remaining_starts) = startstopfs.removestartinframepx(str(end_genesequence_wostop), shift, False)
+        (start_genesequence_wostart, abs_changedpositionstart, abs_remaining_starts) = startstopfs.removestartinframepx(str(optimized_genesequence[:pos-pos % 3]), shift, False)
         modified_genesequence = Seq(start_genesequence_wostart) + optimized_genesequence[pos-pos % 3:fr] + Seq(end_genesequence_wostopstart)
         changedpositionstart = [x-fr for x in abs_changedpositionstart]+rel_changedpositionstart
         remaining_starts = [x-fr for x in abs_remaining_starts]+rel_remaining_starts
@@ -151,7 +140,7 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         if removefs:
             print("-- Remove FS hotspots (single nucleotide repeats)", file=rbsfile)
         # Remove FS hotspots (everywhere, not only in the overlapping sequence)
-        (nofs_sequence, remaininghotspots) = startstop.removeFShotspots2frame(str(modified_genesequence), shift, 4, pos, pos+len_rbs+len_spacer+3)
+        (nofs_sequence, remaininghotspots) = startstopfs.removeFShotspots2frame(str(modified_genesequence), shift, 4, pos, pos+len_rbs+len_spacer+3)
         if rbsfile:
             for pn in [i for (i, x) in enumerate(str(modified_genesequence)) if not x == nofs_sequence[i]]:
                 if str(nofs_sequence[pn]) != str(modified_genesequence[pn]):
@@ -165,7 +154,7 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
         modified_genesequence = Seq(nofs_sequence)
 
     # Remove rare codons in alternative frame
-    (end_genesequence_worare, changedpositionrare, remaining_rare) = startstop.removerarecodonsinframepx(str(modified_genesequence)[fr:], shift, 4, 8.0, False)
+    (end_genesequence_worare, changedpositionrare, remaining_rare) = startstopfs.removerarecodonsinframepx(str(modified_genesequence)[fr:], shift, 4, 8.0, False)
     modified_genesequence = modified_genesequence[:fr] + Seq(end_genesequence_worare)
     if rbsfile:
         # Output information about changes we made to remove these codons
@@ -186,13 +175,16 @@ def treatRBS(origgenesequence, pos, rbssequence, len_spacer, nb_nonsyn, pos_nons
     distBP = [modified_genesequence[i] == x for (i, x) in enumerate(origgenesequence)].count(False)
     sizeoverlap = (len(genesequence)-(pos+len_rbs+len_spacer))
     proportion = float(sizeoverlap)/len(genesequence)
-    print('%d,%d,%.18f,%d,%d,%d,%d,%d,%s,%s' % (pos, sizeoverlap, proportion, shift, len_spacer, distBP, distAA, len(remaining_stops), 'ff266af', str(modified_genesequence)), file=save)
-    #print(pos)
-    #print(modified_genesequence[pos:pos+len_rbs+len_spacer+3])
-    #print(modified_genesequence[:pos]+' '+origgenesequence[pos:pos+len_rbs + len_spacer+3]+' '+modified_genesequence[pos+len_rbs+len_spacer+3:])
+    if rbsfile:
+        print('%d,%d,%.18f,%d,%d,%d,%d,%d,%s,%s' % (pos, sizeoverlap, proportion, shift, len_spacer, distBP, distAA, len(remaining_stops), 'ff266af', str(modified_genesequence)), file=save)
+    else:  # Quiet mode, do not output the full modified sequence
+        print('%d,%d,%.18f,%d,%d,%d,%d,%d,%s' % (pos, sizeoverlap, proportion, shift, len_spacer, distBP, distAA, len(remaining_stops), 'ff266af'), file=save)
 
 
 def findRBS(genesequence, save, detaildir=None):
+    """ Try to create RBS in a coding sequence making only synonymous changes
+    This is achieved by local bruteforce: at each position, we consider all possible synonymous substitutions in the next 18 nucleotides
+    """
     lseq = len(genesequence)
     local = 18  # RBS (6) + spacer (<=7) + ATG (3) rounded to the next codon
     for pos in range(0, lseq-local):  # For each position in the gene, we try to start an RBS there
@@ -229,10 +221,10 @@ def findRBS(genesequence, save, detaildir=None):
 
 
 
-parser = argparse.ArgumentParser(description="The RiBoSor")
-parser.add_argument('inputfile', type=str, help='input fasta file')
-parser.add_argument('--outputdir', type=str, help='output directory')
-parser.add_argument('--summary', action='store_true', default=False, help='only summary csv file (no detail by candidate)')
+parser = argparse.ArgumentParser(description="The RiBoSor creates alternative reading frames in an existing coding sequence, using genetic code redundancy")
+parser.add_argument('inputfile', type=str, help='input fasta file (containing one or several coding sequences)')
+parser.add_argument('--outputdir', type=str, help='output directory (will be inferred from the fasta file if not specified)', metavar="dir")
+parser.add_argument('--summary', action='store_true', default=False, help='only produce summary csv file (no detail by candidate), useful for screening')
 args = parser.parse_args()
 
 if not ".fasta" in args.inputfile:
