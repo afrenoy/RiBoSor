@@ -1,4 +1,0 @@
-At position 1132 replaced G by A (non synonymous, E -> R) to create a perfect RBS-START
-At position 1130 replaced A by G (synonymous) to create a perfect RBS-START
-At position 1133 replaced A by G (synonymous) to create a perfect RBS-START
-At position 1142 replaced G by A (synonymous) to create a perfect RBS-START
