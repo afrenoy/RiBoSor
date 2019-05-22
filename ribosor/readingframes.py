@@ -4,17 +4,251 @@ These functions can be used in the main reading or in an alternative reading fra
 
 from Bio import SeqIO
 from Bio.Seq import Seq
-
-import codons as codonsfun
 from functools import reduce
-SynonymousCodons = codonsfun.SynonymousCodons
+
+""" Data and simple functions to work with the genetic code
+"""
+
+
+NonSynonymousCodons = {
+    'TTC': ['TAT', 'TAC', 'TGG', 'TGG', 'ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT'],
+    'TTT': ['TAT', 'TAC', 'TGG', 'TGG', 'ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT'],
+    'TTG': ['ATC', 'ATA', 'ATT', 'ATG', 'GTC', 'GTA', 'GTG', 'GTT', 'TTT', 'TTC'],
+    'TTA': ['ATC', 'ATA', 'ATT', 'ATG', 'GTC', 'GTA', 'GTG', 'GTT', 'TTT', 'TTC'],
+    'CTT': ['ATC', 'ATA', 'ATT', 'ATG', 'GTC', 'GTA', 'GTG', 'GTT', 'TTT', 'TTC'],
+    'CTC': ['ATC', 'ATA', 'ATT', 'ATG', 'GTC', 'GTA', 'GTG', 'GTT', 'TTT', 'TTC'],
+    'CTA': ['ATC', 'ATA', 'ATT', 'ATG', 'GTC', 'GTA', 'GTG', 'GTT', 'TTT', 'TTC'],
+    'CTG': ['ATC', 'ATA', 'ATT', 'ATG', 'GTC', 'GTA', 'GTG', 'GTT', 'TTT', 'TTC'],
+    'ATT': ['GTC', 'GTA', 'GTG', 'GTT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'TTT', 'TTC', 'TGT', 'TGC'],
+    'ATC': ['GTC', 'GTA', 'GTG', 'GTT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'TTT', 'TTC', 'TGT', 'TGC'],
+    'ATA': ['GTC', 'GTA', 'GTG', 'GTT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'TTT', 'TTC', 'TGT', 'TGC'],
+    'ATG': ['GTC', 'GTA', 'GTG', 'GTT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'TTT', 'TTC', 'TGT', 'TGC'],
+    'GTT': ['ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'ATG', 'GCT', 'GCC', 'GCA', 'GCG'],
+    'GTC': ['ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'ATG', 'GCT', 'GCC', 'GCA', 'GCG'],
+    'GTA': ['ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'ATG', 'GCT', 'GCC', 'GCA', 'GCG'],
+    'GTG': ['ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'ATG', 'GCT', 'GCC', 'GCA', 'GCG'],
+    'TCT': ['ACC', 'ACT', 'ACA', 'ACG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'GAC', 'GAT'],
+    'TCC': ['ACC', 'ACT', 'ACA', 'ACG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'GAC', 'GAT'],
+    'TCA': ['ACC', 'ACT', 'ACA', 'ACG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'GAC', 'GAT'],
+    'TCG': ['ACC', 'ACT', 'ACA', 'ACG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'GAC', 'GAT'],
+    'CCT': ['GCT', 'GCC', 'GCA', 'GCG', 'GAC', 'GAT', 'CAG', 'CAA', 'GAA', 'GAG'],
+    'CCC': ['GCT', 'GCC', 'GCA', 'GCG', 'GAC', 'GAT', 'CAG', 'CAA', 'GAA', 'GAG'],
+    'CCA': ['GCT', 'GCC', 'GCA', 'GCG', 'GAC', 'GAT', 'CAG', 'CAA', 'GAA', 'GAG'],
+    'CCG': ['GCT', 'GCC', 'GCA', 'GCG', 'GAC', 'GAT', 'CAG', 'CAA', 'GAA', 'GAG'],
+    'ACT': ['TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GTC', 'GTA', 'GTG', 'GTT', 'GAA', 'GAG', 'GGG', 'GGC', 'GGA', 'GGT'],
+    'ACC': ['TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GTC', 'GTA', 'GTG', 'GTT', 'GAA', 'GAG', 'GGG', 'GGC', 'GGA', 'GGT'],
+    'ACA': ['TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GTC', 'GTA', 'GTG', 'GTT', 'GAA', 'GAG', 'GGG', 'GGC', 'GGA', 'GGT'],
+    'ACG': ['TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GTC', 'GTA', 'GTG', 'GTT', 'GAA', 'GAG', 'GGG', 'GGC', 'GGA', 'GGT'],
+    'GCT': ['GTC', 'GTA', 'GTG', 'GTT', 'GGG', 'GGC', 'GGA', 'GGT', 'TGT', 'TGC', 'ACC', 'ACT', 'ACA', 'ACG'],
+    'GCC': ['GTC', 'GTA', 'GTG', 'GTT', 'GGG', 'GGC', 'GGA', 'GGT', 'TGT', 'TGC', 'ACC', 'ACT', 'ACA', 'ACG'],
+    'GCA': ['GTC', 'GTA', 'GTG', 'GTT', 'GGG', 'GGC', 'GGA', 'GGT', 'TGT', 'TGC', 'ACC', 'ACT', 'ACA', 'ACG'],
+    'GCG': ['GTC', 'GTA', 'GTG', 'GTT', 'GGG', 'GGC', 'GGA', 'GGT', 'TGT', 'TGC', 'ACC', 'ACT', 'ACA', 'ACG'],
+    'TAT': ['TGG', 'TGG', 'ATG', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'ATC', 'ATA', 'ATT'],
+    'TAC': ['TGG', 'TGG', 'ATG', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'ATC', 'ATA', 'ATT'],
+    'CAT': ['TAT', 'TAC', 'AGG', 'CGC', 'CGA', 'CGT', 'AGA', 'CGC', 'AAC', 'AAT', 'GAA', 'GAG'],
+    'CAC': ['TAT', 'TAC', 'AGG', 'CGC', 'CGA', 'CGT', 'AGA', 'CGC', 'AAC', 'AAT', 'GAA', 'GAG'],
+    'CAA': ['AGG', 'CGC', 'CGA', 'CGT', 'AGA', 'CGC', 'AAC', 'AAT', 'GAC', 'GAT', 'CAT', 'CAC'],
+    'CAG': ['AGG', 'CGC', 'CGA', 'CGT', 'AGA', 'CGC', 'AAC', 'AAT', 'GAC', 'GAT', 'CAT', 'CAC'],
+    'AAT': ['TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'CAT', 'CAC', 'GAA', 'GAG', 'GGG', 'GGC', 'GGA', 'GGT'],
+    'AAC': ['TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'CAT', 'CAC', 'GAA', 'GAG', 'GGG', 'GGC', 'GGA', 'GGT'],
+    'AAA': ['AGG', 'CGC', 'CGA', 'CGT', 'AGA', 'CGC', 'GAA', 'GAG', 'CAG', 'CAA', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG'],
+    'AAG': ['AGG', 'CGC', 'CGA', 'CGT', 'AGA', 'CGC', 'GAA', 'GAG', 'CAG', 'CAA', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG'],
+    'GAT': ['AAC', 'AAT', 'GAA', 'GAG', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'CAG', 'CAA'],
+    'GAC': ['AAC', 'AAT', 'GAA', 'GAG', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'CAG', 'CAA'],
+    'GAA': ['AAA', 'AAG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG'],
+    'GAG': ['AAA', 'AAG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG'],
+    'TGT': ['GCT', 'GCC', 'GCA', 'GCG', 'ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'TTT', 'TTC'],
+    'TGC': ['GCT', 'GCC', 'GCA', 'GCG', 'ATC', 'ATA', 'ATT', 'TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'TTT', 'TTC'],
+    'TGG': ['TAT', 'TAC', 'TTT', 'TTC', 'ACC', 'ACT', 'ACA', 'ACG', 'CAT', 'CAC'],
+    'CGT': ['AAA', 'AAG', 'CAG', 'CAA', 'CAT', 'CAC', 'GAA', 'GAG'],
+    'CGC': ['AAA', 'AAG', 'CAG', 'CAA', 'CAT', 'CAC', 'GAA', 'GAG'],
+    'CGA': ['AAA', 'AAG', 'CAG', 'CAA', 'CAT', 'CAC', 'GAA', 'GAG'],
+    'CGG': ['AAA', 'AAG', 'CAG', 'CAA', 'CAT', 'CAC', 'GAA', 'GAG'],
+    'AGA': ['AAA', 'AAG', 'CAG', 'CAA', 'CAT', 'CAC', 'GAA', 'GAG'],
+    'AGG': ['AAA', 'AAG', 'CAG', 'CAA', 'CAT', 'CAC', 'GAA', 'GAG'],
+    'AGT': ['ACC', 'ACT', 'ACA', 'ACG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'GAC', 'GAT'],
+    'AGG': ['ACC', 'ACT', 'ACA', 'ACG', 'GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'GAC', 'GAT'],
+    'GGT': ['GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GAC', 'GAT'],
+    'GGC': ['GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GAC', 'GAT'],
+    'GGA': ['GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GAC', 'GAT'],
+    'GGG': ['GCT', 'GCC', 'GCA', 'GCG', 'AAC', 'AAT', 'TCT', 'TCA', 'TCG', 'TCC', 'AGT', 'AGG', 'GAC', 'GAT'],
+    'ATG': ['TTG', 'TTA', 'CTC', 'CTG', 'CTA', 'CTT', 'GTC', 'GTA', 'GTG', 'GTT', 'ATC', 'ATA', 'ATT', 'CAG', 'CAA']
+}
+
+
+SynonymousCodons = {
+    'TGT': ['TGC'],
+    'TGC': ['TGT'],
+    'GAC': ['GAT'],
+    'GAT': ['GAC'],
+    'TCT': ['TCG', 'TCA', 'TCC', 'AGC', 'AGT'],
+    'TCG': ['TCT', 'TCA', 'TCC', 'AGC', 'AGT'],
+    'TCA': ['TCT', 'TCG', 'TCC', 'AGC', 'AGT'],
+    'TCC': ['TCT', 'TCG', 'TCA', 'AGC', 'AGT'],
+    'AGC': ['TCT', 'TCG', 'TCA', 'TCC', 'AGT'],
+    'AGT': ['TCT', 'TCG', 'TCA', 'TCC', 'AGC'],
+    'CAA': ['CAG'],
+    'CAG': ['CAA'],
+    'ATG': [],
+    'AAC': ['AAT'],
+    'AAT': ['AAC'],
+    'CCT': ['CCG', 'CCA', 'CCC'],
+    'CCG': ['CCT', 'CCA', 'CCC'],
+    'CCA': ['CCT', 'CCG', 'CCC'],
+    'CCC': ['CCT', 'CCG', 'CCA'],
+    'AAG': ['AAA'],
+    'AAA': ['AAG'],
+    'TAG': ['TGA', 'TAA'],
+    'TGA': ['TAG', 'TAA'],
+    'TAA': ['TAG', 'TGA'],
+    'ACC': ['ACA', 'ACG', 'ACT'],
+    'ACA': ['ACC', 'ACG', 'ACT'],
+    'ACG': ['ACC', 'ACA', 'ACT'],
+    'ACT': ['ACC', 'ACA', 'ACG'],
+    'TTC': ['TTT'],
+    'TTT': ['TTC'],
+    'GCA': ['GCC', 'GCG', 'GCT'],
+    'GCC': ['GCA', 'GCG', 'GCT'],
+    'GCG': ['GCA', 'GCC', 'GCT'],
+    'GCT': ['GCA', 'GCC', 'GCG'],
+    'GGT': ['GGC', 'GGG', 'GGA'],
+    'GGG': ['GGC', 'GGT', 'GGA'],
+    'GGA': ['GGC', 'GGT', 'GGG'],
+    'GGC': ['GGT', 'GGG', 'GGA'],
+    'ATC': ['ATT', 'ATA'],
+    'ATA': ['ATC', 'ATT'],
+    'ATT': ['ATC', 'ATA'],
+    'TTA': ['TTG', 'CTC', 'CTT', 'CTG', 'CTA'],
+    'TTG': ['TTA', 'CTC', 'CTT', 'CTG', 'CTA'],
+    'CTC': ['TTA', 'TTG', 'CTT', 'CTG', 'CTA'],
+    'CTT': ['TTA', 'TTG', 'CTC', 'CTG', 'CTA'],
+    'CTG': ['TTA', 'TTG', 'CTC', 'CTT', 'CTA'],
+    'CTA': ['TTA', 'TTG', 'CTC', 'CTT', 'CTG'],
+    'CAC': ['CAT'],
+    'CAT': ['CAC'],
+    'CGA': ['CGT', 'CGC', 'CGG', 'AGA', 'AGG'],
+    'CGC': ['CGT', 'CGG', 'CGA', 'AGA', 'AGG'],
+    'CGG': ['CGT', 'CGC', 'CGA', 'AGA', 'AGG'],
+    'CGT': ['CGC', 'CGG', 'CGA', 'AGA', 'AGG'],
+    'AGG': ['CGT', 'CGC', 'CGG', 'CGA', 'AGA'],
+    'AGA': ['CGT', 'CGC', 'CGG', 'CGA', 'AGG'],
+    'TGG': [],
+    'GTA': ['GTC', 'GTG', 'GTT'],
+    'GTC': ['GTA', 'GTG', 'GTT'],
+    'GTG': ['GTA', 'GTC', 'GTT'],
+    'GTT': ['GTA', 'GTC', 'GTG'],
+    'GAG': ['GAA'],
+    'GAA': ['GAG'],
+    'TAC': ['TAT'],
+    'TAT': ['TAC']
+}
+
+
+CodonUsage = {
+    'GGG': 10.99,
+    'GGA': 7.92,
+    'GGT': 24.85,
+    'GGC': 29.44,
+    'GAG': 17.79,
+    'GAA': 39.58,
+    'GAT': 32.22,
+    'GAC': 19.05,
+    'GTG': 26.25,
+    'GTA': 10.88,
+    'GTT': 18.38,
+    'GTC': 15.22,
+    'GCG': 33.66,
+    'GCA': 20.28,
+    'GCT': 15.34,
+    'GCC': 25.51,
+    'AGG': 1.22,
+    'AGA': 2.05,
+    'CGG': 5.38,
+    'CGA': 3.53,
+    'CGT': 21.02,
+    'CGC': 22.02,
+    'AAG': 10.21,
+    'AAA': 33.62,
+    'AAT': 17.62,
+    'AAC': 21.67,
+    'ATG': 27.77,
+    'ATA': 4.28,
+    'ATT': 30.40,
+    'ATC': 25.00,
+    'ACG': 14.37,
+    'ACA': 7.02,
+    'ACT': 8.92,
+    'ACC': 23.38,
+    'TGG': 15.31,
+    'TGT': 5.18,
+    'TGC': 6.44,
+    'TAG': 0.23,
+    'TAA': 2.02,
+    'TGA': 0.90,
+    'TAT': 16.32,
+    'TAC': 12.27,
+    'TTT': 22.40,
+    'TTC': 16.59,
+    'AGT': 8.71,
+    'AGC': 16.03,
+    'TCG': 8.92,
+    'TCA': 7.13,
+    'TCT': 8.50,
+    'TCC': 8.59,
+    'CAG': 28.84,
+    'CAA': 15.45,
+    'CAT': 12.90,
+    'CAC': 9.72,
+    'TTG': 13.72,
+    'TTA': 13.89,
+    'CTG': 52.82,
+    'CTA': 3.85,
+    'CTT': 11.04,
+    'CTC': 11.04,
+    'CCG': 23.27,
+    'CCA': 8.52,
+    'CCT': 7.04,
+    'CCC': 5.52,
+}
+
+
+def compute_rarity_score(x):
+    """Compute the rarity score of a list of codons
+    The higer this score, the more rare codons are used
+    """
+    return sum([1 + (8. - CodonUsage[c]) / 8. for c in x if (CodonUsage[c] <= 8.)])
+
+
+def generate_synonymous_combinations(codons_list):
+    """Try all possible combinations of sets of codons,
+    taking one codon of each set,
+    and sort them according to the rarity score
+    with the combinantion using the less rare codons first
+    """
+    import itertools
+    score = dict()
+    for combination in itertools.product(*[SynonymousCodons[i] + [i] for i in codons_list]):
+        score[combination] = compute_rarity_score(combination)
+    return sorted(score.items(), key=lambda x: x[1])
+
+
+mfsc = dict()  # Most Frequent Synonymous Codon
+for codon in CodonUsage:
+    if len(SynonymousCodons[codon]) == 0:
+        mfsc[codon] = codon
+        continue
+    candidate = max(SynonymousCodons[codon], key=lambda sc: CodonUsage[sc])
+    if CodonUsage[candidate] < 8.0 and CodonUsage[codon] > CodonUsage[candidate]:
+        mfsc[codon] = codon
+    else:
+        mfsc[codon] = candidate
 
 
 def optimize(s0):
     """Codon optimization: replace each codon by the most common alternative"""
     newseq = list(s0)
     for i in range(0, len(s0), 3):
-        newcodon = codonsfun.mfsc[s0[i:i + 3]]
+        newcodon = mfsc[s0[i:i + 3]]
         newseq[i:i + 3] = newcodon
     s1 = ''.join(newseq)
     return s1
@@ -47,7 +281,7 @@ def removestopinframepx(s0, x, verbose=True):
         # Try to change them with synonymous
         candfound = False
         allcand = dict()
-        for ((cand1, cand2), rarity_score) in codonsfun.generate_synonymous_combinations([c1, c2]):
+        for ((cand1, cand2), rarity_score) in generate_synonymous_combinations([c1, c2]):
             new = list(s0)
             new[p1:p1 + 3] = cand1[0:3]
             new[p1 + 3:p1 + 6] = cand2[0:3]
@@ -147,7 +381,7 @@ def removestartinframepx(s0, x, verbose=True):
         # Try to change them with synonymous
         candfound = False
         allcand = dict()
-        for ((cand1, cand2), rarity_score) in codonsfun.generate_synonymous_combinations([c1, c2]):
+        for ((cand1, cand2), rarity_score) in generate_synonymous_combinations([c1, c2]):
             new = list(s0)
             new[p1:p1 + 3] = cand1[0:3]
             new[p1 + 3:p1 + 6] = cand2[0:3]
@@ -270,7 +504,7 @@ def removeFShotspots2frame(sequence, frame, maxlrun, begconserve, endconserve):
         nbstopsbefore = str(Seq(localseqbefore[frame:lcontext - 3 + frame]).translate()).count('*')
 
         # Generate all the possible combinations of synonymous codons and the corresponding local sequence
-        allcombination = map(lambda combination: (combination[1], reduce(lambda x, y: x + y, combination[0])), codonsfun.generate_synonymous_combinations(codons))
+        allcombination = map(lambda combination: (combination[1], reduce(lambda x, y: x + y, combination[0])), generate_synonymous_combinations(codons))
 
         # Only keep the combinations that do not create start/stop in alternative frame
         allowedcombination = filter(lambda combination: countstart((prefixe + combination[1] + suffixe)[frame:lcontext - 3 + frame]) <= nbstartsbefore and str(Seq((prefixe + combination[1] + suffixe)[frame:lcontext - 3 + frame]).translate()).count('*') <= nbstopsbefore, allcombination)
@@ -323,8 +557,8 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
 
     # pt=findfirststart(sx)
     codons = [sx[3 * i:3 * i + 3] for i in range(0, int(len(sx) / 3))]
-    listerare = [i for i in range(0, int(len(sx) / 3)) if codonsfun.CodonUsage[codons[i]] < rarethreshold]
-    # sumscore=sum[codonsfun.CodonUsage[codons[i]] for i in listrare]
+    listerare = [i for i in range(0, int(len(sx) / 3)) if CodonUsage[codons[i]] < rarethreshold]
+    # sumscore=sum[CodonUsage[codons[i]] for i in listrare]
     nbrare = len(listerare)
     while(nbrare > 0):  # for irare in listerare:
         # print ' '
@@ -333,10 +567,10 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
         c2 = sequence[3 * irare + 3:3 * irare + 6]
         # print codons[irare] + ' is rare ' + c1 + ' ' + c2
         candfound = False
-        old_rarity_score = codonsfun.compute_rarity_score([c1, c2])  # Rarity score of the six bp sequence in main frame
-        old_usage_framepx = codonsfun.CodonUsage[codons[irare]]  # Codon usage of the involved rare codon in alternative frame
+        old_rarity_score = compute_rarity_score([c1, c2])  # Rarity score of the six bp sequence in main frame
+        old_usage_framepx = CodonUsage[codons[irare]]  # Codon usage of the involved rare codon in alternative frame
         allcand = dict()
-        for ((cand1, cand2), rarity_score) in codonsfun.generate_synonymous_combinations([c1, c2]):  # Warning: rarity_score is calculated in the frame of GalK.
+        for ((cand1, cand2), rarity_score) in generate_synonymous_combinations([c1, c2]):  # Warning: rarity_score is calculated in the frame of GalK.
             # print cand1 + ' ' + cand2 + ' ' + str(irare)
             new = list(sequence)
             new[3 * irare:3 * irare + 3] = cand1[0:3]
@@ -360,7 +594,7 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
                 # print 'no (rare in main frame)'
                 continue
             newcodons = [newsx[3 * i:3 * i + 3] for i in range(0, int(len(newsx) / 3))]
-            newlisterare = [i for i in range(0, int(len(newsx) / 3)) if codonsfun.CodonUsage[newcodons[i]] < rarethreshold]
+            newlisterare = [i for i in range(0, int(len(newsx) / 3)) if CodonUsage[newcodons[i]] < rarethreshold]
             diff = set(newlisterare) - set(remaining)
             if len(diff) > 0 and min(diff) < irare:  # Are we adding rare codons in candidate before the one we are trying to remove?
                 # print 'no (rare in alt frame)'
@@ -368,9 +602,8 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
             # This candidate is valid
             candfound = True
             altframecodon = newsx[3 * irare:3 * irare + 3]
-            # print 'yes ' + str(codonsfun.CodonUsage[altframecodon])
             # Record the number of BPS and the rarity score in alternative frame
-            allcand[(cand1, cand2)] = ([(c1 + c2)[i] == BP for (i, BP) in enumerate(cand1 + cand2)].count(False), codonsfun.CodonUsage[altframecodon])
+            allcand[(cand1, cand2)] = ([(c1 + c2)[i] == BP for (i, BP) in enumerate(cand1 + cand2)].count(False), CodonUsage[altframecodon])
 
         if candfound:  # We found at least one candidate
             # Find the best one (less BPS and less rare codons) among all possible candidates
@@ -386,7 +619,7 @@ def removerarecodonsinframepx(sequence, frame, maxlrun, rarethreshold=8., verbos
             assert (str(Seq(sequence).translate()) == str(Seq(newsequence).translate()))
 
             newcodons = [newsx[3 * i:3 * i + 3] for i in range(0, int(len(newsx) / 3))]
-            newlisterare = set([i for i in range(0, int(len(newsx) / 3)) if codonsfun.CodonUsage[newcodons[i]] < rarethreshold]) - set(remaining)
+            newlisterare = set([i for i in range(0, int(len(newsx) / 3)) if CodonUsage[newcodons[i]] < rarethreshold]) - set(remaining)
 
             # Is this candidate better than original sequence ?
             if new_usage_framepx > old_usage_framepx:
